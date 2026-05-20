@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<section class="page-head reveal">
+    <div>
+        <span class="eyebrow">{{ section }}</span>
+        <h1>{{ title }}</h1>
+        <p>Completa los campos requeridos y guarda el registro.</p>
+    </div>
+    {% if list_url_name %}
+        <a class="btn ghost" href="{% url list_url_name %}">Cancelar</a>
+    {% endif %}
+</section>
+
+<section class="form-shell reveal">
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="form-errors">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <div class="form-grid">
+            {% for field in form %}
+                <div class="field {% if field.field.widget.input_type == 'checkbox' %}check-field{% endif %}">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                    {% for error in field.errors %}
+                        <span class="error-text">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="form-actions">
+            {% if list_url_name %}<a class="btn ghost" href="{% url list_url_name %}">Volver</a>{% endif %}
+            <button class="btn primary" type="submit">Guardar</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

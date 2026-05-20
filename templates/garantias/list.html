@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<section class="page-head reveal">
+    <div>
+        <span class="eyebrow">{{ section|default:'modulo' }}</span>
+        <h1>{{ title }}</h1>
+        <p>{{ subtitle }}</p>
+    </div>
+    {% if create_url_name %}
+        <a class="btn primary" href="{% url create_url_name %}">Crear registro</a>
+    {% endif %}
+</section>
+
+<section class="toolbar reveal">
+    <form class="search-box" method="get">
+        <input type="search" name="q" value="{{ query }}" placeholder="Buscar...">
+        <button class="btn dark" type="submit">Filtrar</button>
+        {% if query %}
+            <a class="btn ghost" href=".">Limpiar</a>
+        {% endif %}
+    </form>
+</section>
+
+<section class="record-grid">
+    {% for object in object_list %}
+        <article class="record-card reveal">
+            <a class="record-main" href="{{ object.get_absolute_url }}">
+                <span class="record-kicker">{{ object.creado|date:'d M Y'|default:'Registro' }}</span>
+                <strong>{{ object }}</strong>
+                {% if object.actualizado %}
+                    <small>Actualizado {{ object.actualizado|date:'d/m/Y H:i' }}</small>
+                {% endif %}
+            </a>
+            <div class="record-actions">
+                <a class="icon-btn" title="Ver detalle" href="{{ object.get_absolute_url }}">V</a>
+                <a class="icon-btn" title="Editar" href="{{ object.get_absolute_url }}editar/">E</a>
+            </div>
+        </article>
+    {% empty %}
+        <div class="empty-state reveal">
+            <h2>No hay registros todavia</h2>
+            <p>Empieza creando el primer elemento de este modulo.</p>
+            {% if create_url_name %}
+                <a class="btn primary" href="{% url create_url_name %}">Crear ahora</a>
+            {% endif %}
+        </div>
+    {% endfor %}
+</section>
+
+{% if is_paginated %}
+    <nav class="pagination reveal" aria-label="Paginacion">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">Anterior</a>
+        {% endif %}
+        <span>Pagina {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}">Siguiente</a>
+        {% endif %}
+    </nav>
+{% endif %}
+{% endblock %}

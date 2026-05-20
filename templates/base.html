@@ -1,0 +1,52 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Garantias y reparaciones{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <a class="brand" href="{% url 'dashboard' %}" aria-label="Inicio">
+                <span class="brand-mark">GR</span>
+                <span>
+                    <strong>GarantiaPro</strong>
+                    <small>Reparaciones</small>
+                </span>
+            </a>
+            <nav class="nav-list" aria-label="Principal">
+                <a class="{% if section == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Panel</a>
+                <a class="{% if section == 'clientes' %}active{% endif %}" href="{% url 'cliente_list' %}">Clientes</a>
+                <a class="{% if section == 'productos' %}active{% endif %}" href="{% url 'producto_list' %}">Productos</a>
+                <a class="{% if section == 'ventas' %}active{% endif %}" href="{% url 'venta_list' %}">Ventas</a>
+                <a class="{% if section == 'garantias' %}active{% endif %}" href="{% url 'garantia_list' %}">Garantias</a>
+                <a class="{% if section == 'casos' %}active{% endif %}" href="{% url 'caso_list' %}">Casos tecnicos</a>
+                <a class="{% if section == 'diagnosticos' %}active{% endif %}" href="{% url 'diagnostico_list' %}">Diagnosticos</a>
+                <a class="{% if section == 'evidencias' %}active{% endif %}" href="{% url 'evidencia_list' %}">Fotos</a>
+                <a class="{% if section == 'estados' %}active{% endif %}" href="{% url 'estado_list' %}">Estados</a>
+                <a class="{% if section == 'entregas' %}active{% endif %}" href="{% url 'entrega_list' %}">Entrega</a>
+            </nav>
+            <div class="sidebar-card">
+                <span class="pulse"></span>
+                <p>Flujo activo</p>
+                <strong>Venta, garantia, diagnostico, evidencia y cierre.</strong>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            {% if messages %}
+                <div class="toast-stack">
+                    {% for message in messages %}
+                        <div class="toast {{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    <script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

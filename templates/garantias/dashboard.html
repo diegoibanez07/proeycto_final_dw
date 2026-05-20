@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel de control{% endblock %}
+
+{% block content %}
+<section class="hero-panel reveal">
+    <div>
+        <span class="eyebrow">Plataforma operativa</span>
+        <h1>Garantias y reparaciones con trazabilidad completa.</h1>
+        <p>Controla clientes, productos vendidos, garantias, diagnosticos, evidencias, estados y entregas desde un solo flujo.</p>
+    </div>
+    <div class="hero-actions">
+        <a class="btn primary" href="{% url 'caso_create' %}">Abrir caso</a>
+        <a class="btn ghost" href="{% url 'evidencia_create' %}">Subir evidencia</a>
+    </div>
+</section>
+
+<section class="stats-grid">
+    <article class="stat-card reveal">
+        <span>Clientes</span>
+        <strong>{{ total_clientes }}</strong>
+    </article>
+    <article class="stat-card reveal">
+        <span>Productos</span>
+        <strong>{{ total_productos }}</strong>
+    </article>
+    <article class="stat-card reveal">
+        <span>Garantias vigentes</span>
+        <strong>{{ garantias_vigentes }}</strong>
+    </article>
+    <article class="stat-card reveal">
+        <span>Casos abiertos</span>
+        <strong>{{ casos_abiertos }}</strong>
+    </article>
+</section>
+
+<section class="content-grid">
+    <div class="panel reveal">
+        <div class="panel-head">
+            <div>
+                <span class="eyebrow">Atencion tecnica</span>
+                <h2>Casos recientes</h2>
+            </div>
+            <a class="link-action" href="{% url 'caso_list' %}">Ver todos</a>
+        </div>
+        <div class="timeline">
+            {% for caso in casos_recientes %}
+                <a class="timeline-item" href="{{ caso.get_absolute_url }}">
+                    <span class="state-dot" style="--dot-color: {{ caso.estado_actual.color }}"></span>
+                    <div>
+                        <strong>{{ caso.garantia.venta.cliente.nombre }}</strong>
+                        <p>{{ caso.garantia.venta.producto.nombre }} - {{ caso.garantia.venta.producto.serial }}</p>
+                    </div>
+                    <small>{{ caso.estado_actual.nombre }}</small>
+                </a>
+            {% empty %}
+                <p class="empty">Aun no hay casos tecnicos registrados.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="panel reveal">
+        <div class="panel-head">
+            <div>
+                <span class="eyebrow">Flujo</span>
+                <h2>Estados del sistema</h2>
+            </div>
+            <a class="link-action" href="{% url 'estado_list' %}">Configurar</a>
+        </div>
+        <div class="state-list">
+            {% for estado in estados %}
+                <div class="state-row">
+                    <span class="state-dot" style="--dot-color: {{ estado.color }}"></span>
+                    <span>{{ estado.nombre }}</span>
+                    <strong>{{ estado.total }}</strong>
+                </div>
+            {% empty %}
+                <p class="empty">Crea los estados iniciales para comenzar.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}
