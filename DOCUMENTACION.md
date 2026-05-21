@@ -737,7 +737,49 @@ Abrir:
 http://127.0.0.1:8000/
 ```
 
-## 14. PostgreSQL
+## 14. Cargar datos realistas
+
+El proyecto incluye un comando para llenar la base con informacion realista y
+relacionada.
+
+Ejecutar:
+
+```powershell
+python manage.py cargar_datos_reales --cantidad 1000 --limpiar
+```
+
+Que hace:
+
+- Limpia los datos operativos anteriores si se usa `--limpiar`.
+- Crea clientes con nombres, documentos, telefonos, correos y direcciones.
+- Crea productos con marcas, modelos, seriales y categorias.
+- Crea ventas relacionadas con clientes y productos.
+- Crea garantias relacionadas con ventas.
+- Crea casos tecnicos relacionados con garantias.
+- Crea diagnosticos relacionados con casos.
+- Crea evidencias relacionadas con casos y archivos en `media/`.
+- Crea historial de estados relacionado con casos.
+- Crea entregas relacionadas con casos.
+
+Los catalogos como categorias y estados no se inflan a 1000 porque son tablas de
+configuracion. Mantener pocos estados permite que el flujo siga siendo real y
+entendible.
+
+Resultado esperado con `--cantidad 1000`:
+
+```text
+Clientes: 1000
+Productos: 1000
+Ventas: 1000
+Garantias: 1000
+Casos: 1000
+Diagnosticos: 1000
+Evidencias: 1000
+Historial estados: 1000
+Entregas: 1000
+```
+
+## 15. PostgreSQL
 
 El proyecto puede usar PostgreSQL si existen estas variables en `.env`:
 
@@ -751,7 +793,7 @@ POSTGRES_PORT=5432
 
 Si esas variables no existen, Django usa SQLite para desarrollo local.
 
-## 15. Resumen final
+## 16. Resumen final
 
 La plataforma funciona como un flujo operativo:
 

@@ -44,6 +44,17 @@ python manage.py runserver
 
 La app queda disponible en `http://127.0.0.1:8000/`.
 
+## Cargar datos realistas
+
+Para poblar la base con volumen y revisar como se ve el sistema:
+
+```powershell
+python manage.py cargar_datos_reales --cantidad 1000 --limpiar
+```
+
+Esto crea 1000 registros operativos relacionados: clientes, productos, ventas,
+garantias, casos, diagnosticos, evidencias, historial y entregas.
+
 ## PostgreSQL
 
 Copia `.env.example` a `.env` y define:
