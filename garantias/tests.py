@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 
+from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
@@ -48,7 +49,24 @@ class PruebasModelosGarantias(TestCase):
 
 
 class PruebasVistasGarantias(TestCase):
-    def test_paginas_principales_responden(self):
+    def setUp(self):
+        self.administrador = User.objects.create_superuser(
+            username='admin',
+            password='clave-segura',
+            email='admin@example.com',
+        )
+        self.recepcionista = User.objects.create_user(username='recepcion', password='clave-segura')
+        self.recepcionista.groups.add(Group.objects.get(name='Recepcion'))
+        self.tecnico = User.objects.create_user(username='tecnico', password='clave-segura')
+        self.tecnico.groups.add(Group.objects.get(name='Tecnico'))
+
+    def test_usuario_sin_ingresar_es_redirigido_al_login(self):
+        respuesta = self.client.get(reverse('dashboard'))
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertIn(reverse('login'), respuesta.url)
+
+    def test_paginas_principales_responden_para_administrador(self):
+        self.client.force_login(self.administrador)
         nombres = [
             'dashboard',
             'cliente_list',
@@ -66,3 +84,15 @@ class PruebasVistasGarantias(TestCase):
             with self.subTest(nombre=nombre):
                 respuesta = self.client.get(reverse(nombre))
                 self.assertEqual(respuesta.status_code, 200)
+
+    def test_recepcion_no_puede_entrar_a_estados(self):
+        self.client.force_login(self.recepcionista)
+        respuesta = self.client.get(reverse('estado_list'))
+        self.assertEqual(respuesta.status_code, 403)
+
+    def test_tecnico_puede_diagnosticos_pero_no_ventas(self):
+        self.client.force_login(self.tecnico)
+        respuesta_diagnosticos = self.client.get(reverse('diagnostico_list'))
+        respuesta_ventas = self.client.get(reverse('venta_list'))
+        self.assertEqual(respuesta_diagnosticos.status_code, 200)
+        self.assertEqual(respuesta_ventas.status_code, 403)

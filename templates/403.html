@@ -1,0 +1,26 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Acceso no autorizado</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="pagina-acceso">
+    <div class="fondo-ambiental"></div>
+    <main class="acceso-contenedor">
+        <section class="acceso-panel aparecer">
+            <div>
+                <span class="etiqueta">Permiso denegado</span>
+                <h1>403</h1>
+                <p>Tu usuario no tiene un rol habilitado para entrar a esta seccion.</p>
+            </div>
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button class="boton boton-primario" type="submit">Cerrar sesion</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

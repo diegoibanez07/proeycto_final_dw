@@ -163,6 +163,21 @@ a {
     line-height: 1.32;
 }
 
+.formulario-salida {
+    margin-top: 14px;
+}
+
+.formulario-salida button {
+    width: 100%;
+    min-height: 38px;
+    border: 1px solid rgba(255, 255, 255, .16);
+    border-radius: var(--radio);
+    background: rgba(255, 255, 255, .08);
+    color: #fff;
+    font-weight: 800;
+    cursor: pointer;
+}
+
 .indicador-actividad {
     display: inline-block;
     width: 10px;
@@ -177,6 +192,50 @@ a {
     width: min(1180px, calc(100vw - 328px));
     margin: 0 auto;
     padding: 28px 24px 48px;
+}
+
+.pagina-acceso {
+    display: grid;
+    min-height: 100vh;
+    place-items: center;
+}
+
+.acceso-contenedor {
+    position: relative;
+    width: min(940px, calc(100vw - 32px));
+}
+
+.acceso-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, .72fr);
+    gap: 28px;
+    align-items: center;
+    min-height: 430px;
+    padding: 34px;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: var(--superficie);
+    box-shadow: var(--sombra-suave);
+    backdrop-filter: blur(16px);
+}
+
+.acceso-panel h1 {
+    font-size: 4rem;
+}
+
+.acceso-panel form {
+    display: grid;
+    gap: 16px;
+}
+
+.acceso-panel input {
+    width: 100%;
+    min-height: 46px;
+    padding: 0 12px;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: rgba(255, 255, 255, .9);
+    color: var(--texto-principal);
 }
 
 .panel-destacado,
@@ -709,6 +768,7 @@ h2 {
 
     .panel-destacado,
     .cabecera-pagina,
+    .acceso-panel,
     .malla-contenido,
     .distribucion-detalle,
     .malla-formulario {

@@ -9,7 +9,7 @@
         <h1>{{ titulo }}</h1>
         <p>{{ subtitulo }}</p>
     </div>
-    {% if nombre_url_creacion %}
+    {% if puede_crear_registro %}
         <a class="boton boton-primario" href="{% url nombre_url_creacion %}">Crear registro</a>
     {% endif %}
 </section>
@@ -36,14 +36,16 @@
             </a>
             <div class="acciones-registro">
                 <a class="boton-icono" title="Ver detalle" href="{{ registro.get_absolute_url }}">Ver</a>
-                <a class="boton-icono" title="Editar" href="{{ registro.get_absolute_url }}editar/">Editar</a>
+                {% if puede_crear_registro %}
+                    <a class="boton-icono" title="Editar" href="{{ registro.get_absolute_url }}editar/">Editar</a>
+                {% endif %}
             </div>
         </article>
     {% empty %}
         <div class="estado-vacio aparecer">
             <h2>No hay registros todavia</h2>
             <p>Empieza creando el primer elemento de este modulo.</p>
-            {% if nombre_url_creacion %}
+            {% if puede_crear_registro %}
                 <a class="boton boton-primario" href="{% url nombre_url_creacion %}">Crear ahora</a>
             {% endif %}
         </div>

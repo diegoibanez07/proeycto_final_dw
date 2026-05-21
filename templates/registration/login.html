@@ -1,0 +1,37 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ingreso | GarantiaPro</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="pagina-acceso">
+    <div class="fondo-ambiental"></div>
+    <main class="acceso-contenedor">
+        <section class="acceso-panel aparecer">
+            <div>
+                <span class="etiqueta">Acceso protegido</span>
+                <h1>GarantiaPro</h1>
+                <p>Ingresa con tu usuario interno para ver solo los modulos habilitados para tu rol.</p>
+            </div>
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="errores-formulario">{{ form.non_field_errors }}</div>
+                {% endif %}
+                <div class="grupo-campo">
+                    <label for="{{ form.username.id_for_label }}">Usuario</label>
+                    {{ form.username }}
+                </div>
+                <div class="grupo-campo">
+                    <label for="{{ form.password.id_for_label }}">Contrasena</label>
+                    {{ form.password }}
+                </div>
+                <button class="boton boton-primario" type="submit">Entrar</button>
+            </form>
+        </section>
+    </main>
+</body>
+</html>

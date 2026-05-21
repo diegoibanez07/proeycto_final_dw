@@ -20,22 +20,21 @@
             </a>
 
             <nav class="navegacion-principal" aria-label="Principal">
-                <a class="{% if seccion == 'panel' %}activo{% endif %}" href="{% url 'dashboard' %}">Panel</a>
-                <a class="{% if seccion == 'clientes' %}activo{% endif %}" href="{% url 'cliente_list' %}">Clientes</a>
-                <a class="{% if seccion == 'productos' %}activo{% endif %}" href="{% url 'producto_list' %}">Productos</a>
-                <a class="{% if seccion == 'ventas' %}activo{% endif %}" href="{% url 'venta_list' %}">Ventas</a>
-                <a class="{% if seccion == 'garantias' %}activo{% endif %}" href="{% url 'garantia_list' %}">Garantias</a>
-                <a class="{% if seccion == 'casos' %}activo{% endif %}" href="{% url 'caso_list' %}">Casos tecnicos</a>
-                <a class="{% if seccion == 'diagnosticos' %}activo{% endif %}" href="{% url 'diagnostico_list' %}">Diagnosticos</a>
-                <a class="{% if seccion == 'evidencias' %}activo{% endif %}" href="{% url 'evidencia_list' %}">Fotos</a>
-                <a class="{% if seccion == 'estados' %}activo{% endif %}" href="{% url 'estado_list' %}">Estados</a>
-                <a class="{% if seccion == 'entregas' %}activo{% endif %}" href="{% url 'entrega_list' %}">Entrega</a>
+                {% for elemento in menu_principal %}
+                    <a class="{% if seccion == elemento.seccion %}activo{% endif %}" href="{% url elemento.url %}">
+                        {{ elemento.nombre }}
+                    </a>
+                {% endfor %}
             </nav>
 
             <div class="resumen-lateral">
                 <span class="indicador-actividad"></span>
-                <p>Operacion conectada</p>
-                <strong>Venta, garantia, diagnostico, evidencia y cierre.</strong>
+                <p>{{ request.user.get_full_name|default:request.user.username }}</p>
+                <strong>{{ rol_usuario }}</strong>
+                <form class="formulario-salida" method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit">Cerrar sesion</button>
+                </form>
             </div>
         </aside>
 

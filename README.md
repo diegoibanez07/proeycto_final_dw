@@ -15,6 +15,19 @@ garantias, diagnosticos tecnicos, evidencias, estados y entrega final.
 - Estados e historial
 - Entrega y cierre
 
+## Roles
+
+La plataforma exige inicio de sesion. Los grupos iniciales se crean con las
+migraciones:
+
+- `Administrador`: ve y administra todo.
+- `Recepcion`: clientes, productos, ventas, garantias, casos, evidencias y entregas.
+- `Tecnico`: casos, diagnosticos, evidencias e historial de estados.
+- `Consulta`: solo lectura de los modulos operativos permitidos.
+
+Para asignar un rol, entra al admin de Django, abre el usuario y agregalo al
+grupo correspondiente.
+
 ## Instalacion
 
 ```powershell

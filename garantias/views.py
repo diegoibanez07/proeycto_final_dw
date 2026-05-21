@@ -1,4 +1,7 @@
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
@@ -18,6 +21,35 @@ from .forms import (
     FormularioProducto,
     FormularioVenta,
 )
+from .permisos import (
+    ROL_ADMINISTRADOR,
+    ROL_RECEPCION,
+    ROL_TECNICO,
+    usuario_puede_ver_seccion,
+    usuario_tiene_rol,
+)
+
+
+ROLES_RECEPCION = [ROL_ADMINISTRADOR, ROL_RECEPCION]
+ROLES_TECNICOS = [ROL_ADMINISTRADOR, ROL_TECNICO]
+ROLES_CASOS = [ROL_ADMINISTRADOR, ROL_RECEPCION, ROL_TECNICO]
+ROLES_EVIDENCIAS = [ROL_ADMINISTRADOR, ROL_RECEPCION, ROL_TECNICO]
+
+
+class VistaProtegidaPorRol(LoginRequiredMixin, UserPassesTestMixin):
+    login_url = 'login'
+    roles_permitidos = None
+    seccion = ''
+
+    def test_func(self):
+        if self.roles_permitidos:
+            return usuario_tiene_rol(self.request.user, self.roles_permitidos)
+        return usuario_puede_ver_seccion(self.request.user, self.seccion)
+
+    def handle_no_permission(self):
+        if not self.request.user.is_authenticated:
+            return super().handle_no_permission()
+        raise PermissionDenied('No tienes permiso para entrar a esa seccion.')
 from .models import (
     CasoReparacion,
     CategoriaProducto,
@@ -33,8 +65,9 @@ from .models import (
 )
 
 
-class VistaPanelControl(TemplateView):
+class VistaPanelControl(VistaProtegidaPorRol, TemplateView):
     template_name = 'garantias/dashboard.html'
+    seccion = 'panel'
 
     def get_context_data(self, **argumentos):
         contexto = super().get_context_data(**argumentos)
@@ -57,13 +90,14 @@ class VistaPanelControl(TemplateView):
         return contexto
 
 
-class VistaBaseLista(ListView):
+class VistaBaseLista(VistaProtegidaPorRol, ListView):
     template_name = 'garantias/lista.html'
     paginate_by = 10
     campos_busqueda = []
     titulo = ''
     subtitulo = ''
     nombre_url_creacion = ''
+    roles_creacion = None
     seccion = ''
 
     def get_queryset(self):
@@ -85,16 +119,22 @@ class VistaBaseLista(ListView):
             seccion=self.seccion,
             texto_busqueda=self.request.GET.get('q', '').strip(),
             registros=contexto['object_list'],
+            puede_crear_registro=(
+                self.nombre_url_creacion
+                and usuario_tiene_rol(self.request.user, self.roles_creacion or [ROL_ADMINISTRADOR])
+            ),
         )
         return contexto
 
 
-class VistaBaseDetalle(DetailView):
+class VistaBaseDetalle(VistaProtegidaPorRol, DetailView):
     template_name = 'garantias/detalle.html'
     titulo = ''
     nombre_url_lista = ''
     nombre_url_edicion = ''
     nombre_url_eliminacion = ''
+    roles_edicion = None
+    roles_eliminacion = [ROL_ADMINISTRADOR]
     seccion = ''
     campos_detalle = []
 
@@ -107,6 +147,15 @@ class VistaBaseDetalle(DetailView):
             nombre_url_eliminacion=self.nombre_url_eliminacion,
             seccion=self.seccion,
             registro=self.object,
+            puede_editar_registro=(
+                self.nombre_url_edicion
+                and usuario_tiene_rol(self.request.user, self.roles_edicion or [ROL_ADMINISTRADOR])
+            ),
+            puede_eliminar_registro=(
+                self.nombre_url_eliminacion
+                and usuario_tiene_rol(self.request.user, self.roles_eliminacion)
+            ),
+            puede_avanzar_estado=usuario_tiene_rol(self.request.user, ROLES_TECNICOS),
             detalles=[(etiqueta, self.obtener_valor(ruta)) for etiqueta, ruta in self.campos_detalle],
         )
         return contexto
@@ -120,7 +169,7 @@ class VistaBaseDetalle(DetailView):
         return valor
 
 
-class VistaBaseFormulario:
+class VistaBaseFormulario(VistaProtegidaPorRol):
     template_name = 'garantias/formulario.html'
     titulo = ''
     nombre_url_lista = ''
@@ -141,11 +190,12 @@ class VistaBaseFormulario:
         return super().form_valid(formulario)
 
 
-class VistaBaseEliminacion(DeleteView):
+class VistaBaseEliminacion(VistaProtegidaPorRol, DeleteView):
     template_name = 'garantias/confirmar_eliminacion.html'
     titulo = ''
     nombre_url_lista = ''
     seccion = ''
+    roles_permitidos = [ROL_ADMINISTRADOR]
 
     def get_context_data(self, **argumentos):
         contexto = super().get_context_data(**argumentos)
@@ -167,6 +217,7 @@ class VistaListaCliente(VistaBaseLista):
     titulo = 'Clientes'
     subtitulo = 'Personas y empresas con equipos vendidos o en reparacion.'
     nombre_url_creacion = 'cliente_create'
+    roles_creacion = ROLES_RECEPCION
     seccion = 'clientes'
     campos_busqueda = ['nombre', 'documento', 'telefono', 'correo']
 
@@ -177,6 +228,7 @@ class VistaDetalleCliente(VistaBaseDetalle):
     nombre_url_lista = 'cliente_list'
     nombre_url_edicion = 'cliente_update'
     nombre_url_eliminacion = 'cliente_delete'
+    roles_edicion = ROLES_RECEPCION
     seccion = 'clientes'
     campos_detalle = [
         ('Documento', 'documento'),
@@ -194,6 +246,7 @@ class VistaCreacionCliente(VistaBaseFormulario, CreateView):
     titulo = 'Nuevo cliente'
     nombre_url_lista = 'cliente_list'
     seccion = 'clientes'
+    roles_permitidos = ROLES_RECEPCION
 
 
 class VistaEdicionCliente(VistaBaseFormulario, UpdateView):
@@ -202,6 +255,7 @@ class VistaEdicionCliente(VistaBaseFormulario, UpdateView):
     titulo = 'Editar cliente'
     nombre_url_lista = 'cliente_list'
     seccion = 'clientes'
+    roles_permitidos = ROLES_RECEPCION
 
 
 class VistaEliminacionCliente(VistaBaseEliminacion):
@@ -217,6 +271,7 @@ class VistaListaCategoria(VistaBaseLista):
     titulo = 'Categorias'
     subtitulo = 'Clasificacion normalizada para los productos.'
     nombre_url_creacion = 'categoria_create'
+    roles_creacion = ROLES_RECEPCION
     seccion = 'productos'
     campos_busqueda = ['nombre', 'descripcion']
 
@@ -227,6 +282,7 @@ class VistaDetalleCategoria(VistaBaseDetalle):
     nombre_url_lista = 'categoria_list'
     nombre_url_edicion = 'categoria_update'
     nombre_url_eliminacion = 'categoria_delete'
+    roles_edicion = ROLES_RECEPCION
     seccion = 'productos'
     campos_detalle = [('Nombre', 'nombre'), ('Descripcion', 'descripcion'), ('Activo', 'activo')]
 
@@ -237,6 +293,7 @@ class VistaCreacionCategoria(VistaBaseFormulario, CreateView):
     titulo = 'Nueva categoria'
     nombre_url_lista = 'categoria_list'
     seccion = 'productos'
+    roles_permitidos = ROLES_RECEPCION
 
 
 class VistaEdicionCategoria(VistaBaseFormulario, UpdateView):
@@ -245,6 +302,7 @@ class VistaEdicionCategoria(VistaBaseFormulario, UpdateView):
     titulo = 'Editar categoria'
     nombre_url_lista = 'categoria_list'
     seccion = 'productos'
+    roles_permitidos = ROLES_RECEPCION
 
 
 class VistaEliminacionCategoria(VistaBaseEliminacion):
@@ -260,6 +318,7 @@ class VistaListaProducto(VistaBaseLista):
     titulo = 'Productos'
     subtitulo = 'Inventario serializado para ventas, garantias y reparaciones.'
     nombre_url_creacion = 'producto_create'
+    roles_creacion = ROLES_RECEPCION
     seccion = 'productos'
     campos_busqueda = ['nombre', 'marca', 'modelo', 'serial', 'categoria__nombre']
 
@@ -273,6 +332,7 @@ class VistaDetalleProducto(VistaBaseDetalle):
     nombre_url_lista = 'producto_list'
     nombre_url_edicion = 'producto_update'
     nombre_url_eliminacion = 'producto_delete'
+    roles_edicion = ROLES_RECEPCION
     seccion = 'productos'
     campos_detalle = [
         ('Nombre', 'nombre'),
@@ -290,6 +350,7 @@ class VistaCreacionProducto(VistaBaseFormulario, CreateView):
     titulo = 'Nuevo producto'
     nombre_url_lista = 'producto_list'
     seccion = 'productos'
+    roles_permitidos = ROLES_RECEPCION
 
 
 class VistaEdicionProducto(VistaBaseFormulario, UpdateView):
@@ -298,6 +359,7 @@ class VistaEdicionProducto(VistaBaseFormulario, UpdateView):
     titulo = 'Editar producto'
     nombre_url_lista = 'producto_list'
     seccion = 'productos'
+    roles_permitidos = ROLES_RECEPCION
 
 
 class VistaEliminacionProducto(VistaBaseEliminacion):
@@ -313,6 +375,7 @@ class VistaListaVenta(VistaBaseLista):
     titulo = 'Ventas'
     subtitulo = 'Registro comercial que activa la trazabilidad de garantia.'
     nombre_url_creacion = 'venta_create'
+    roles_creacion = ROLES_RECEPCION
     seccion = 'ventas'
     campos_busqueda = ['numero_factura', 'cliente__nombre', 'producto__serial']
 
@@ -326,6 +389,7 @@ class VistaDetalleVenta(VistaBaseDetalle):
     nombre_url_lista = 'venta_list'
     nombre_url_edicion = 'venta_update'
     nombre_url_eliminacion = 'venta_delete'
+    roles_edicion = ROLES_RECEPCION
     seccion = 'ventas'
     campos_detalle = [
         ('Cliente', 'cliente'),
@@ -343,6 +407,7 @@ class VistaCreacionVenta(VistaBaseFormulario, CreateView):
     titulo = 'Nueva venta'
     nombre_url_lista = 'venta_list'
     seccion = 'ventas'
+    roles_permitidos = ROLES_RECEPCION
 
 
 class VistaEdicionVenta(VistaBaseFormulario, UpdateView):
@@ -351,6 +416,7 @@ class VistaEdicionVenta(VistaBaseFormulario, UpdateView):
     titulo = 'Editar venta'
     nombre_url_lista = 'venta_list'
     seccion = 'ventas'
+    roles_permitidos = ROLES_RECEPCION
 
 
 class VistaEliminacionVenta(VistaBaseEliminacion):
@@ -366,6 +432,7 @@ class VistaListaGarantia(VistaBaseLista):
     titulo = 'Garantias'
     subtitulo = 'Cobertura, vigencia y condiciones asociadas a cada venta.'
     nombre_url_creacion = 'garantia_create'
+    roles_creacion = ROLES_RECEPCION
     seccion = 'garantias'
     campos_busqueda = ['venta__numero_factura', 'venta__cliente__nombre', 'venta__producto__serial', 'estado']
 
@@ -379,6 +446,7 @@ class VistaDetalleGarantia(VistaBaseDetalle):
     nombre_url_lista = 'garantia_list'
     nombre_url_edicion = 'garantia_update'
     nombre_url_eliminacion = 'garantia_delete'
+    roles_edicion = ROLES_RECEPCION
     seccion = 'garantias'
     campos_detalle = [
         ('Venta', 'venta'),
@@ -396,6 +464,7 @@ class VistaCreacionGarantia(VistaBaseFormulario, CreateView):
     titulo = 'Nueva garantia'
     nombre_url_lista = 'garantia_list'
     seccion = 'garantias'
+    roles_permitidos = ROLES_RECEPCION
 
 
 class VistaEdicionGarantia(VistaBaseFormulario, UpdateView):
@@ -404,6 +473,7 @@ class VistaEdicionGarantia(VistaBaseFormulario, UpdateView):
     titulo = 'Editar garantia'
     nombre_url_lista = 'garantia_list'
     seccion = 'garantias'
+    roles_permitidos = ROLES_RECEPCION
 
 
 class VistaEliminacionGarantia(VistaBaseEliminacion):
@@ -419,6 +489,7 @@ class VistaListaCaso(VistaBaseLista):
     titulo = 'Casos tecnicos'
     subtitulo = 'Flujo completo de ingreso, revision, reparacion y cierre.'
     nombre_url_creacion = 'caso_create'
+    roles_creacion = ROLES_CASOS
     seccion = 'casos'
     campos_busqueda = [
         'descripcion_falla',
@@ -442,6 +513,7 @@ class VistaDetalleCaso(VistaBaseDetalle):
     nombre_url_lista = 'caso_list'
     nombre_url_edicion = 'caso_update'
     nombre_url_eliminacion = 'caso_delete'
+    roles_edicion = ROLES_CASOS
     seccion = 'casos'
     campos_detalle = [
         ('Cliente', 'cliente'),
@@ -476,6 +548,7 @@ class VistaCreacionCaso(VistaBaseFormulario, CreateView):
     titulo = 'Nuevo caso tecnico'
     nombre_url_lista = 'caso_list'
     seccion = 'casos'
+    roles_permitidos = ROLES_CASOS
 
     def form_valid(self, formulario):
         respuesta = super().form_valid(formulario)
@@ -493,6 +566,7 @@ class VistaEdicionCaso(VistaBaseFormulario, UpdateView):
     titulo = 'Editar caso tecnico'
     nombre_url_lista = 'caso_list'
     seccion = 'casos'
+    roles_permitidos = ROLES_CASOS
 
     def form_valid(self, formulario):
         identificador_estado_anterior = CasoReparacion.objects.get(pk=self.object.pk).estado_actual_id
@@ -521,6 +595,7 @@ class VistaListaDiagnostico(VistaBaseLista):
     titulo = 'Diagnosticos'
     subtitulo = 'Analisis tecnicos y soluciones propuestas.'
     nombre_url_creacion = 'diagnostico_create'
+    roles_creacion = ROLES_TECNICOS
     seccion = 'diagnosticos'
     campos_busqueda = ['tecnico', 'diagnostico', 'solucion', 'caso__garantia__venta__cliente__nombre']
 
@@ -534,6 +609,7 @@ class VistaDetalleDiagnostico(VistaBaseDetalle):
     nombre_url_lista = 'diagnostico_list'
     nombre_url_edicion = 'diagnostico_update'
     nombre_url_eliminacion = 'diagnostico_delete'
+    roles_edicion = ROLES_TECNICOS
     seccion = 'diagnosticos'
     campos_detalle = [
         ('Caso', 'caso'),
@@ -552,6 +628,7 @@ class VistaCreacionDiagnostico(VistaBaseFormulario, CreateView):
     titulo = 'Nuevo diagnostico'
     nombre_url_lista = 'diagnostico_list'
     seccion = 'diagnosticos'
+    roles_permitidos = ROLES_TECNICOS
 
 
 class VistaEdicionDiagnostico(VistaBaseFormulario, UpdateView):
@@ -560,6 +637,7 @@ class VistaEdicionDiagnostico(VistaBaseFormulario, UpdateView):
     titulo = 'Editar diagnostico'
     nombre_url_lista = 'diagnostico_list'
     seccion = 'diagnosticos'
+    roles_permitidos = ROLES_TECNICOS
 
 
 class VistaEliminacionDiagnostico(VistaBaseEliminacion):
@@ -575,6 +653,7 @@ class VistaListaEvidencia(VistaBaseLista):
     titulo = 'Fotos y evidencias'
     subtitulo = 'Archivos de ingreso, reparacion, diagnostico y entrega.'
     nombre_url_creacion = 'evidencia_create'
+    roles_creacion = ROLES_EVIDENCIAS
     seccion = 'evidencias'
     campos_busqueda = ['descripcion', 'tipo', 'caso__garantia__venta__cliente__nombre']
 
@@ -588,6 +667,7 @@ class VistaDetalleEvidencia(VistaBaseDetalle):
     nombre_url_lista = 'evidencia_list'
     nombre_url_edicion = 'evidencia_update'
     nombre_url_eliminacion = 'evidencia_delete'
+    roles_edicion = ROLES_EVIDENCIAS
     seccion = 'evidencias'
     campos_detalle = [
         ('Caso', 'caso'),
@@ -603,6 +683,7 @@ class VistaCreacionEvidencia(VistaBaseFormulario, CreateView):
     titulo = 'Nueva evidencia'
     nombre_url_lista = 'evidencia_list'
     seccion = 'evidencias'
+    roles_permitidos = ROLES_EVIDENCIAS
 
 
 class VistaEdicionEvidencia(VistaBaseFormulario, UpdateView):
@@ -611,6 +692,7 @@ class VistaEdicionEvidencia(VistaBaseFormulario, UpdateView):
     titulo = 'Editar evidencia'
     nombre_url_lista = 'evidencia_list'
     seccion = 'evidencias'
+    roles_permitidos = ROLES_EVIDENCIAS
 
 
 class VistaEliminacionEvidencia(VistaBaseEliminacion):
@@ -636,6 +718,7 @@ class VistaDetalleEstado(VistaBaseDetalle):
     nombre_url_lista = 'estado_list'
     nombre_url_edicion = 'estado_update'
     nombre_url_eliminacion = 'estado_delete'
+    roles_edicion = [ROL_ADMINISTRADOR]
     seccion = 'estados'
     campos_detalle = [
         ('Codigo', 'codigo'),
@@ -676,7 +759,8 @@ class VistaListaHistorial(VistaBaseLista):
     titulo = 'Historial de estados'
     subtitulo = 'Auditoria cronologica de cada movimiento del caso.'
     nombre_url_creacion = 'historial_create'
-    seccion = 'estados'
+    roles_creacion = ROLES_TECNICOS
+    seccion = 'historial'
     campos_busqueda = ['comentario', 'estado__nombre', 'caso__garantia__venta__cliente__nombre']
 
     def get_queryset(self):
@@ -689,7 +773,8 @@ class VistaDetalleHistorial(VistaBaseDetalle):
     nombre_url_lista = 'historial_list'
     nombre_url_edicion = 'historial_update'
     nombre_url_eliminacion = 'historial_delete'
-    seccion = 'estados'
+    roles_edicion = ROLES_TECNICOS
+    seccion = 'historial'
     campos_detalle = [('Caso', 'caso'), ('Estado', 'estado'), ('Fecha', 'fecha'), ('Comentario', 'comentario')]
 
 
@@ -698,7 +783,8 @@ class VistaCreacionHistorial(VistaBaseFormulario, CreateView):
     form_class = FormularioHistorialEstado
     titulo = 'Nuevo movimiento'
     nombre_url_lista = 'historial_list'
-    seccion = 'estados'
+    seccion = 'historial'
+    roles_permitidos = ROLES_TECNICOS
 
     def form_valid(self, formulario):
         respuesta = super().form_valid(formulario)
@@ -714,7 +800,8 @@ class VistaEdicionHistorial(VistaBaseFormulario, UpdateView):
     form_class = FormularioHistorialEstado
     titulo = 'Editar movimiento'
     nombre_url_lista = 'historial_list'
-    seccion = 'estados'
+    seccion = 'historial'
+    roles_permitidos = ROLES_TECNICOS
 
 
 class VistaEliminacionHistorial(VistaBaseEliminacion):
@@ -722,7 +809,7 @@ class VistaEliminacionHistorial(VistaBaseEliminacion):
     success_url = reverse_lazy('historial_list')
     titulo = 'Eliminar movimiento'
     nombre_url_lista = 'historial_list'
-    seccion = 'estados'
+    seccion = 'historial'
 
 
 class VistaListaEntrega(VistaBaseLista):
@@ -730,6 +817,7 @@ class VistaListaEntrega(VistaBaseLista):
     titulo = 'Entregas'
     subtitulo = 'Cierre documentado del producto reparado o devuelto.'
     nombre_url_creacion = 'entrega_create'
+    roles_creacion = ROLES_RECEPCION
     seccion = 'entregas'
     campos_busqueda = ['entregado_a', 'documento_entrega', 'caso__garantia__venta__cliente__nombre']
 
@@ -743,6 +831,7 @@ class VistaDetalleEntrega(VistaBaseDetalle):
     nombre_url_lista = 'entrega_list'
     nombre_url_edicion = 'entrega_update'
     nombre_url_eliminacion = 'entrega_delete'
+    roles_edicion = ROLES_RECEPCION
     seccion = 'entregas'
     campos_detalle = [
         ('Caso', 'caso'),
@@ -760,6 +849,7 @@ class VistaCreacionEntrega(VistaBaseFormulario, CreateView):
     titulo = 'Nueva entrega'
     nombre_url_lista = 'entrega_list'
     seccion = 'entregas'
+    roles_permitidos = ROLES_RECEPCION
 
     def form_valid(self, formulario):
         respuesta = super().form_valid(formulario)
@@ -784,6 +874,7 @@ class VistaEdicionEntrega(VistaBaseFormulario, UpdateView):
     titulo = 'Editar entrega'
     nombre_url_lista = 'entrega_list'
     seccion = 'entregas'
+    roles_permitidos = ROLES_RECEPCION
 
 
 class VistaEliminacionEntrega(VistaBaseEliminacion):
@@ -794,7 +885,10 @@ class VistaEliminacionEntrega(VistaBaseEliminacion):
     seccion = 'entregas'
 
 
+@login_required(login_url='login')
 def avanzar_estado_caso(request, caso_id):
+    if not usuario_tiene_rol(request.user, ROLES_TECNICOS):
+        raise PermissionDenied('Solo el personal tecnico puede avanzar estados desde esta accion.')
     caso = get_object_or_404(CasoReparacion, pk=caso_id)
     siguiente_estado = EstadoCaso.objects.filter(
         activo=True,

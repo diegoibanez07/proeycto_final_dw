@@ -11,8 +11,8 @@
     </div>
     <div class="acciones-principales">
         {% if nombre_url_lista %}<a class="boton boton-secundario" href="{% url nombre_url_lista %}">Volver</a>{% endif %}
-        {% if nombre_url_edicion %}<a class="boton boton-primario" href="{% url nombre_url_edicion registro.pk %}">Editar</a>{% endif %}
-        {% if nombre_url_eliminacion %}<a class="boton boton-peligro" href="{% url nombre_url_eliminacion registro.pk %}">Eliminar</a>{% endif %}
+        {% if puede_editar_registro %}<a class="boton boton-primario" href="{% url nombre_url_edicion registro.pk %}">Editar</a>{% endif %}
+        {% if puede_eliminar_registro %}<a class="boton boton-peligro" href="{% url nombre_url_eliminacion registro.pk %}">Eliminar</a>{% endif %}
     </div>
 </section>
 
@@ -23,7 +23,7 @@
                 <span class="etiqueta">Informacion</span>
                 <h2>Datos del registro</h2>
             </div>
-            {% if seccion == 'casos' %}
+            {% if seccion == 'casos' and puede_avanzar_estado %}
                 <a class="accion-texto" href="{% url 'caso_avanzar' registro.pk %}">Avanzar estado</a>
             {% endif %}
         </div>

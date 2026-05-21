@@ -10,8 +10,12 @@
         <p>Un tablero para seguir cada equipo desde la venta hasta la entrega, con diagnosticos, fotos, estados y cierre documentado.</p>
     </div>
     <div class="acciones-principales">
-        <a class="boton boton-primario" href="{% url 'caso_create' %}">Abrir caso</a>
-        <a class="boton boton-secundario" href="{% url 'evidencia_create' %}">Subir evidencia</a>
+        {% if puede_crear_caso %}
+            <a class="boton boton-primario" href="{% url 'caso_create' %}">Abrir caso</a>
+        {% endif %}
+        {% if puede_subir_evidencia %}
+            <a class="boton boton-secundario" href="{% url 'evidencia_create' %}">Subir evidencia</a>
+        {% endif %}
     </div>
 </section>
 
