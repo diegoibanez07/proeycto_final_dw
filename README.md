@@ -6,6 +6,12 @@ garantias, diagnosticos tecnicos, evidencias, estados y entrega final.
 La explicacion completa del flujo, roles, pantallas y funcionamiento esta en
 [DOCUMENTACION.md](DOCUMENTACION.md).
 
+El manual de uso con usuarios de prueba, roles y permisos esta en
+[MANUAL_USO_ROLES.md](MANUAL_USO_ROLES.md).
+
+El informe de pruebas, validaciones y analisis de calidad esta en
+[INFORME_PRUEBAS_Y_ANALISIS.md](INFORME_PRUEBAS_Y_ANALISIS.md).
+
 ## Modulos
 
 - Clientes
