@@ -1,20 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const toasts = document.querySelectorAll('.toast');
-    toasts.forEach((toast) => {
+    const mensajes = document.querySelectorAll('.mensaje');
+    mensajes.forEach((mensaje) => {
         window.setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateY(-8px)';
+            mensaje.style.opacity = '0';
+            mensaje.style.transform = 'translateY(-8px)';
         }, 3400);
     });
 
-    const cards = document.querySelectorAll('.record-card, .stat-card, .panel');
-    cards.forEach((card) => {
-        card.addEventListener('pointermove', (event) => {
-            const rect = card.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            card.style.setProperty('--spot-x', `${x}px`);
-            card.style.setProperty('--spot-y', `${y}px`);
+    const superficiesInteractivas = document.querySelectorAll(
+        '.tarjeta-registro, .tarjeta-indicador, .panel-contenido'
+    );
+    superficiesInteractivas.forEach((superficie) => {
+        superficie.addEventListener('pointermove', (evento) => {
+            const rectangulo = superficie.getBoundingClientRect();
+            const posicionHorizontal = evento.clientX - rectangulo.left;
+            const posicionVertical = evento.clientY - rectangulo.top;
+            superficie.style.setProperty('--posicion-horizontal', `${posicionHorizontal}px`);
+            superficie.style.setProperty('--posicion-vertical', `${posicionVertical}px`);
         });
     });
 });

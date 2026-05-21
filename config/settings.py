@@ -16,14 +16,14 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-env_file = BASE_DIR / '.env'
-if env_file.exists():
-    for raw_line in env_file.read_text().splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith('#') or '=' not in line:
+archivo_entorno = BASE_DIR / '.env'
+if archivo_entorno.exists():
+    for linea_sin_procesar in archivo_entorno.read_text().splitlines():
+        linea = linea_sin_procesar.strip()
+        if not linea or linea.startswith('#') or '=' not in linea:
             continue
-        key, value = line.split('=', 1)
-        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+        nombre_variable, valor_variable = linea.split('=', 1)
+        os.environ.setdefault(nombre_variable.strip(), valor_variable.strip().strip('"').strip("'"))
 
 
 # Quick-start development settings - unsuitable for production

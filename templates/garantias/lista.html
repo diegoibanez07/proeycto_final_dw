@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<section class="cabecera-pagina aparecer">
+    <div>
+        <span class="etiqueta">{{ seccion|default:'modulo' }}</span>
+        <h1>{{ titulo }}</h1>
+        <p>{{ subtitulo }}</p>
+    </div>
+    {% if nombre_url_creacion %}
+        <a class="boton boton-primario" href="{% url nombre_url_creacion %}">Crear registro</a>
+    {% endif %}
+</section>
+
+<section class="barra-herramientas aparecer">
+    <form class="buscador" method="get">
+        <input type="search" name="q" value="{{ texto_busqueda }}" placeholder="Buscar por nombre, factura, serial o estado...">
+        <button class="boton boton-oscuro" type="submit">Filtrar</button>
+        {% if texto_busqueda %}
+            <a class="boton boton-secundario" href=".">Limpiar</a>
+        {% endif %}
+    </form>
+</section>
+
+<section class="malla-registros">
+    {% for registro in registros %}
+        <article class="tarjeta-registro aparecer">
+            <a class="contenido-registro" href="{{ registro.get_absolute_url }}">
+                <span class="texto-superior">{{ registro.creado|date:'d M Y'|default:'Registro' }}</span>
+                <strong>{{ registro }}</strong>
+                {% if registro.actualizado %}
+                    <small>Actualizado {{ registro.actualizado|date:'d/m/Y H:i' }}</small>
+                {% endif %}
+            </a>
+            <div class="acciones-registro">
+                <a class="boton-icono" title="Ver detalle" href="{{ registro.get_absolute_url }}">Ver</a>
+                <a class="boton-icono" title="Editar" href="{{ registro.get_absolute_url }}editar/">Editar</a>
+            </div>
+        </article>
+    {% empty %}
+        <div class="estado-vacio aparecer">
+            <h2>No hay registros todavia</h2>
+            <p>Empieza creando el primer elemento de este modulo.</p>
+            {% if nombre_url_creacion %}
+                <a class="boton boton-primario" href="{% url nombre_url_creacion %}">Crear ahora</a>
+            {% endif %}
+        </div>
+    {% endfor %}
+</section>
+
+{% if is_paginated %}
+    <nav class="paginacion aparecer" aria-label="Paginacion">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if texto_busqueda %}&q={{ texto_busqueda }}{% endif %}">Anterior</a>
+        {% endif %}
+        <span>Pagina {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if texto_busqueda %}&q={{ texto_busqueda }}{% endif %}">Siguiente</a>
+        {% endif %}
+    </nav>
+{% endif %}
+{% endblock %}

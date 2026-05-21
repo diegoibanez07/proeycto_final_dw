@@ -5,13 +5,13 @@ from django.urls import reverse
 from django.utils import timezone
 
 
-phone_validator = RegexValidator(
+validador_telefono = RegexValidator(
     regex=r'^[0-9+\-\s()]{7,20}$',
     message='Ingresa un telefono valido.',
 )
 
 
-class TimeStampedModel(models.Model):
+class ModeloFechasRegistro(models.Model):
     creado = models.DateTimeField(auto_now_add=True)
     actualizado = models.DateTimeField(auto_now=True)
 
@@ -19,7 +19,7 @@ class TimeStampedModel(models.Model):
         abstract = True
 
 
-class Cliente(TimeStampedModel):
+class Cliente(ModeloFechasRegistro):
     TIPO_DOCUMENTO = [
         ('CC', 'Cedula de ciudadania'),
         ('CE', 'Cedula de extranjeria'),
@@ -30,7 +30,7 @@ class Cliente(TimeStampedModel):
     tipo_documento = models.CharField(max_length=3, choices=TIPO_DOCUMENTO, default='CC')
     documento = models.CharField(max_length=30, unique=True)
     nombre = models.CharField(max_length=120)
-    telefono = models.CharField(max_length=20, validators=[phone_validator])
+    telefono = models.CharField(max_length=20, validators=[validador_telefono])
     correo = models.EmailField(blank=True)
     direccion = models.CharField(max_length=180, blank=True)
     ciudad = models.CharField(max_length=80, blank=True)
@@ -48,7 +48,7 @@ class Cliente(TimeStampedModel):
         return reverse('cliente_detail', kwargs={'pk': self.pk})
 
 
-class CategoriaProducto(TimeStampedModel):
+class CategoriaProducto(ModeloFechasRegistro):
     nombre = models.CharField(max_length=80, unique=True)
     descripcion = models.TextField(blank=True)
     activo = models.BooleanField(default=True)
@@ -65,7 +65,7 @@ class CategoriaProducto(TimeStampedModel):
         return reverse('categoria_detail', kwargs={'pk': self.pk})
 
 
-class Producto(TimeStampedModel):
+class Producto(ModeloFechasRegistro):
     nombre = models.CharField(max_length=120)
     marca = models.CharField(max_length=80)
     modelo = models.CharField(max_length=80)
@@ -90,7 +90,7 @@ class Producto(TimeStampedModel):
         return reverse('producto_detail', kwargs={'pk': self.pk})
 
 
-class Venta(TimeStampedModel):
+class Venta(ModeloFechasRegistro):
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name='ventas')
     producto = models.ForeignKey(Producto, on_delete=models.PROTECT, related_name='ventas')
     fecha_venta = models.DateField(default=timezone.localdate)
@@ -110,7 +110,7 @@ class Venta(TimeStampedModel):
         return reverse('venta_detail', kwargs={'pk': self.pk})
 
 
-class Garantia(TimeStampedModel):
+class Garantia(ModeloFechasRegistro):
     ESTADOS = [
         ('vigente', 'Vigente'),
         ('vencida', 'Vencida'),
@@ -145,7 +145,7 @@ class Garantia(TimeStampedModel):
         return reverse('garantia_detail', kwargs={'pk': self.pk})
 
 
-class EstadoCaso(TimeStampedModel):
+class EstadoCaso(ModeloFechasRegistro):
     codigo = models.SlugField(max_length=40, unique=True)
     nombre = models.CharField(max_length=80, unique=True)
     descripcion = models.TextField(blank=True)
@@ -166,7 +166,7 @@ class EstadoCaso(TimeStampedModel):
         return reverse('estado_detail', kwargs={'pk': self.pk})
 
 
-class CasoReparacion(TimeStampedModel):
+class CasoReparacion(ModeloFechasRegistro):
     PRIORIDADES = [
         ('baja', 'Baja'),
         ('media', 'Media'),
@@ -209,7 +209,7 @@ class CasoReparacion(TimeStampedModel):
         return reverse('caso_detail', kwargs={'pk': self.pk})
 
 
-class Diagnostico(TimeStampedModel):
+class Diagnostico(ModeloFechasRegistro):
     caso = models.ForeignKey(CasoReparacion, on_delete=models.CASCADE, related_name='diagnosticos')
     tecnico = models.CharField(max_length=120)
     diagnostico = models.TextField()
@@ -235,7 +235,7 @@ class Diagnostico(TimeStampedModel):
         return reverse('diagnostico_detail', kwargs={'pk': self.pk})
 
 
-class Evidencia(TimeStampedModel):
+class Evidencia(ModeloFechasRegistro):
     TIPOS = [
         ('ingreso', 'Ingreso'),
         ('diagnostico', 'Diagnostico'),
@@ -285,7 +285,7 @@ class HistorialEstado(models.Model):
         return reverse('historial_detail', kwargs={'pk': self.pk})
 
 
-class Entrega(TimeStampedModel):
+class Entrega(ModeloFechasRegistro):
     caso = models.OneToOneField(CasoReparacion, on_delete=models.PROTECT, related_name='entrega')
     fecha_entrega = models.DateTimeField(default=timezone.now)
     entregado_a = models.CharField(max_length=120)

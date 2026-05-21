@@ -3,50 +3,50 @@
 {% block title %}Panel de control{% endblock %}
 
 {% block content %}
-<section class="hero-panel reveal">
-    <div>
-        <span class="eyebrow">Plataforma operativa</span>
+<section class="panel-destacado aparecer">
+    <div class="contenido-destacado">
+        <span class="etiqueta">Plataforma operativa</span>
         <h1>Garantias y reparaciones con trazabilidad completa.</h1>
-        <p>Controla clientes, productos vendidos, garantias, diagnosticos, evidencias, estados y entregas desde un solo flujo.</p>
+        <p>Un tablero para seguir cada equipo desde la venta hasta la entrega, con diagnosticos, fotos, estados y cierre documentado.</p>
     </div>
-    <div class="hero-actions">
-        <a class="btn primary" href="{% url 'caso_create' %}">Abrir caso</a>
-        <a class="btn ghost" href="{% url 'evidencia_create' %}">Subir evidencia</a>
+    <div class="acciones-principales">
+        <a class="boton boton-primario" href="{% url 'caso_create' %}">Abrir caso</a>
+        <a class="boton boton-secundario" href="{% url 'evidencia_create' %}">Subir evidencia</a>
     </div>
 </section>
 
-<section class="stats-grid">
-    <article class="stat-card reveal">
+<section class="tablero-indicadores">
+    <article class="tarjeta-indicador aparecer">
         <span>Clientes</span>
         <strong>{{ total_clientes }}</strong>
     </article>
-    <article class="stat-card reveal">
+    <article class="tarjeta-indicador aparecer">
         <span>Productos</span>
         <strong>{{ total_productos }}</strong>
     </article>
-    <article class="stat-card reveal">
+    <article class="tarjeta-indicador aparecer">
         <span>Garantias vigentes</span>
         <strong>{{ garantias_vigentes }}</strong>
     </article>
-    <article class="stat-card reveal">
+    <article class="tarjeta-indicador aparecer">
         <span>Casos abiertos</span>
         <strong>{{ casos_abiertos }}</strong>
     </article>
 </section>
 
-<section class="content-grid">
-    <div class="panel reveal">
-        <div class="panel-head">
+<section class="malla-contenido">
+    <div class="panel-contenido aparecer">
+        <div class="encabezado-panel">
             <div>
-                <span class="eyebrow">Atencion tecnica</span>
+                <span class="etiqueta">Atencion tecnica</span>
                 <h2>Casos recientes</h2>
             </div>
-            <a class="link-action" href="{% url 'caso_list' %}">Ver todos</a>
+            <a class="accion-texto" href="{% url 'caso_list' %}">Ver todos</a>
         </div>
-        <div class="timeline">
+        <div class="linea-tiempo">
             {% for caso in casos_recientes %}
-                <a class="timeline-item" href="{{ caso.get_absolute_url }}">
-                    <span class="state-dot" style="--dot-color: {{ caso.estado_actual.color }}"></span>
+                <a class="elemento-linea-tiempo" href="{{ caso.get_absolute_url }}">
+                    <span class="punto-estado" style="--color-punto: {{ caso.estado_actual.color }}"></span>
                     <div>
                         <strong>{{ caso.garantia.venta.cliente.nombre }}</strong>
                         <p>{{ caso.garantia.venta.producto.nombre }} - {{ caso.garantia.venta.producto.serial }}</p>
@@ -54,28 +54,28 @@
                     <small>{{ caso.estado_actual.nombre }}</small>
                 </a>
             {% empty %}
-                <p class="empty">Aun no hay casos tecnicos registrados.</p>
+                <p class="texto-vacio">Aun no hay casos tecnicos registrados.</p>
             {% endfor %}
         </div>
     </div>
 
-    <div class="panel reveal">
-        <div class="panel-head">
+    <div class="panel-contenido aparecer">
+        <div class="encabezado-panel">
             <div>
-                <span class="eyebrow">Flujo</span>
+                <span class="etiqueta">Flujo</span>
                 <h2>Estados del sistema</h2>
             </div>
-            <a class="link-action" href="{% url 'estado_list' %}">Configurar</a>
+            <a class="accion-texto" href="{% url 'estado_list' %}">Configurar</a>
         </div>
-        <div class="state-list">
+        <div class="lista-estados">
             {% for estado in estados %}
-                <div class="state-row">
-                    <span class="state-dot" style="--dot-color: {{ estado.color }}"></span>
+                <div class="fila-estado">
+                    <span class="punto-estado" style="--color-punto: {{ estado.color }}"></span>
                     <span>{{ estado.nombre }}</span>
                     <strong>{{ estado.total }}</strong>
                 </div>
             {% empty %}
-                <p class="empty">Crea los estados iniciales para comenzar.</p>
+                <p class="texto-vacio">Crea los estados iniciales para comenzar.</p>
             {% endfor %}
         </div>
     </div>

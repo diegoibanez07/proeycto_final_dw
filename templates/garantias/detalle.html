@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<section class="cabecera-pagina aparecer">
+    <div>
+        <span class="etiqueta">{{ seccion }}</span>
+        <h1>{{ registro }}</h1>
+        <p>{{ titulo }}</p>
+    </div>
+    <div class="acciones-principales">
+        {% if nombre_url_lista %}<a class="boton boton-secundario" href="{% url nombre_url_lista %}">Volver</a>{% endif %}
+        {% if nombre_url_edicion %}<a class="boton boton-primario" href="{% url nombre_url_edicion registro.pk %}">Editar</a>{% endif %}
+        {% if nombre_url_eliminacion %}<a class="boton boton-peligro" href="{% url nombre_url_eliminacion registro.pk %}">Eliminar</a>{% endif %}
+    </div>
+</section>
+
+<section class="distribucion-detalle">
+    <div class="panel-contenido aparecer">
+        <div class="encabezado-panel">
+            <div>
+                <span class="etiqueta">Informacion</span>
+                <h2>Datos del registro</h2>
+            </div>
+            {% if seccion == 'casos' %}
+                <a class="accion-texto" href="{% url 'caso_avanzar' registro.pk %}">Avanzar estado</a>
+            {% endif %}
+        </div>
+        <dl class="lista-detalle">
+            {% for etiqueta, valor in detalles %}
+                <div>
+                    <dt>{{ etiqueta }}</dt>
+                    <dd>{{ valor|default:'-' }}</dd>
+                </div>
+            {% endfor %}
+        </dl>
+    </div>
+
+    {% if registro.imagen %}
+        <div class="panel-contenido aparecer">
+            <div class="encabezado-panel">
+                <div>
+                    <span class="etiqueta">Archivo</span>
+                    <h2>Evidencia adjunta</h2>
+                </div>
+            </div>
+            {% if registro.imagen.url|lower|slice:'-4:' == '.pdf' %}
+                <a class="boton boton-primario" href="{{ registro.imagen.url }}" target="_blank" rel="noreferrer">Abrir PDF</a>
+            {% else %}
+                <img class="vista-evidencia" src="{{ registro.imagen.url }}" alt="{{ registro.descripcion }}">
+            {% endif %}
+        </div>
+    {% endif %}
+</section>
+
+{% if seccion == 'casos' %}
+<section class="malla-contenido">
+    <div class="panel-contenido aparecer">
+        <div class="encabezado-panel">
+            <div>
+                <span class="etiqueta">Tecnico</span>
+                <h2>Diagnosticos</h2>
+            </div>
+            <a class="accion-texto" href="{% url 'diagnostico_create' %}">Agregar</a>
+        </div>
+        <div class="lista-compacta">
+            {% for item in diagnosticos %}
+                <a href="{{ item.get_absolute_url }}">
+                    <strong>{{ item.tecnico }}</strong>
+                    <small>{{ item.fecha|date:'d/m/Y H:i' }}</small>
+                    <p>{{ item.diagnostico|truncatechars:110 }}</p>
+                </a>
+            {% empty %}
+                <p class="texto-vacio">Sin diagnosticos registrados.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="panel-contenido aparecer">
+        <div class="encabezado-panel">
+            <div>
+                <span class="etiqueta">Evidencia</span>
+                <h2>Fotos y archivos</h2>
+            </div>
+            <a class="accion-texto" href="{% url 'evidencia_create' %}">Subir</a>
+        </div>
+        <div class="malla-medios">
+            {% for item in evidencias %}
+                <a href="{{ item.get_absolute_url }}">
+                    {% if item.imagen.url|lower|slice:'-4:' == '.pdf' %}
+                        <span class="pieza-pdf">PDF</span>
+                    {% else %}
+                        <img src="{{ item.imagen.url }}" alt="{{ item.descripcion }}">
+                    {% endif %}
+                    <small>{{ item.descripcion|truncatechars:40 }}</small>
+                </a>
+            {% empty %}
+                <p class="texto-vacio">Sin evidencias adjuntas.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="panel-contenido aparecer">
+    <div class="encabezado-panel">
+        <div>
+            <span class="etiqueta">Auditoria</span>
+            <h2>Historial de estados</h2>
+        </div>
+        <a class="accion-texto" href="{% url 'historial_create' %}">Nuevo movimiento</a>
+    </div>
+    <div class="linea-tiempo">
+        {% for item in historial %}
+            <a class="elemento-linea-tiempo" href="{{ item.get_absolute_url }}">
+                <span class="punto-estado" style="--color-punto: {{ item.estado.color }}"></span>
+                <div>
+                    <strong>{{ item.estado.nombre }}</strong>
+                    <p>{{ item.comentario|default:'Sin comentario' }}</p>
+                </div>
+                <small>{{ item.fecha|date:'d/m/Y H:i' }}</small>
+            </a>
+        {% empty %}
+            <p class="texto-vacio">Sin movimientos registrados.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

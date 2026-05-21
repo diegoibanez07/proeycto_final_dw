@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<section class="cabecera-pagina aparecer">
+    <div>
+        <span class="etiqueta">{{ seccion }}</span>
+        <h1>{{ titulo }}</h1>
+        <p>Completa los campos requeridos y guarda el registro.</p>
+    </div>
+    {% if nombre_url_lista %}
+        <a class="boton boton-secundario" href="{% url nombre_url_lista %}">Cancelar</a>
+    {% endif %}
+</section>
+
+<section class="contenedor-formulario aparecer">
+    <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {% if formulario.non_field_errors %}
+            <div class="errores-formulario">{{ formulario.non_field_errors }}</div>
+        {% endif %}
+        <div class="malla-formulario">
+            {% for campo in formulario %}
+                <div class="grupo-campo {% if campo.field.widget.input_type == 'checkbox' %}grupo-casilla{% endif %}">
+                    <label for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                    {{ campo }}
+                    {% if campo.help_text %}<small>{{ campo.help_text }}</small>{% endif %}
+                    {% for error in campo.errors %}
+                        <span class="texto-error">{{ error }}</span>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+        <div class="acciones-formulario">
+            {% if nombre_url_lista %}<a class="boton boton-secundario" href="{% url nombre_url_lista %}">Volver</a>{% endif %}
+            <button class="boton boton-primario" type="submit">Guardar</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

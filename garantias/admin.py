@@ -16,42 +16,42 @@ from .models import (
 
 
 @admin.register(Cliente)
-class ClienteAdmin(admin.ModelAdmin):
+class AdministradorCliente(admin.ModelAdmin):
     list_display = ('nombre', 'documento', 'telefono', 'correo', 'activo')
     search_fields = ('nombre', 'documento', 'telefono', 'correo')
     list_filter = ('activo', 'tipo_documento')
 
 
 @admin.register(CategoriaProducto)
-class CategoriaProductoAdmin(admin.ModelAdmin):
+class AdministradorCategoriaProducto(admin.ModelAdmin):
     list_display = ('nombre', 'activo')
     search_fields = ('nombre',)
     list_filter = ('activo',)
 
 
 @admin.register(Producto)
-class ProductoAdmin(admin.ModelAdmin):
+class AdministradorProducto(admin.ModelAdmin):
     list_display = ('nombre', 'marca', 'modelo', 'serial', 'categoria', 'activo')
     search_fields = ('nombre', 'marca', 'modelo', 'serial')
     list_filter = ('categoria', 'activo')
 
 
 @admin.register(Venta)
-class VentaAdmin(admin.ModelAdmin):
+class AdministradorVenta(admin.ModelAdmin):
     list_display = ('numero_factura', 'cliente', 'producto', 'fecha_venta', 'valor')
     search_fields = ('numero_factura', 'cliente__nombre', 'producto__serial')
     list_filter = ('fecha_venta',)
 
 
 @admin.register(Garantia)
-class GarantiaAdmin(admin.ModelAdmin):
+class AdministradorGarantia(admin.ModelAdmin):
     list_display = ('venta', 'fecha_inicio', 'fecha_fin', 'estado')
     search_fields = ('venta__numero_factura', 'venta__cliente__nombre')
     list_filter = ('estado', 'fecha_fin')
 
 
 @admin.register(EstadoCaso)
-class EstadoCasoAdmin(admin.ModelAdmin):
+class AdministradorEstadoCaso(admin.ModelAdmin):
     list_display = ('orden', 'nombre', 'codigo', 'es_final', 'activo')
     list_display_links = ('nombre',)
     list_editable = ('orden', 'es_final', 'activo')
@@ -59,7 +59,7 @@ class EstadoCasoAdmin(admin.ModelAdmin):
 
 
 @admin.register(CasoReparacion)
-class CasoReparacionAdmin(admin.ModelAdmin):
+class AdministradorCasoReparacion(admin.ModelAdmin):
     list_display = ('id', 'cliente', 'producto', 'estado_actual', 'prioridad', 'fecha_ingreso', 'fecha_cierre')
     search_fields = (
         'garantia__venta__cliente__nombre',
@@ -71,28 +71,28 @@ class CasoReparacionAdmin(admin.ModelAdmin):
 
 
 @admin.register(Diagnostico)
-class DiagnosticoAdmin(admin.ModelAdmin):
+class AdministradorDiagnostico(admin.ModelAdmin):
     list_display = ('caso', 'tecnico', 'requiere_repuesto', 'costo_estimado', 'fecha')
     search_fields = ('tecnico', 'diagnostico', 'solucion')
     list_filter = ('requiere_repuesto', 'fecha')
 
 
 @admin.register(Evidencia)
-class EvidenciaAdmin(admin.ModelAdmin):
+class AdministradorEvidencia(admin.ModelAdmin):
     list_display = ('caso', 'tipo', 'descripcion', 'fecha')
     search_fields = ('descripcion', 'caso__garantia__venta__cliente__nombre')
     list_filter = ('tipo', 'fecha')
 
 
 @admin.register(HistorialEstado)
-class HistorialEstadoAdmin(admin.ModelAdmin):
+class AdministradorHistorialEstado(admin.ModelAdmin):
     list_display = ('caso', 'estado', 'fecha', 'comentario')
     search_fields = ('comentario', 'estado__nombre')
     list_filter = ('estado', 'fecha')
 
 
 @admin.register(Entrega)
-class EntregaAdmin(admin.ModelAdmin):
+class AdministradorEntrega(admin.ModelAdmin):
     list_display = ('caso', 'entregado_a', 'documento_entrega', 'fecha_entrega', 'recibido_conforme')
     search_fields = ('entregado_a', 'documento_entrega', 'caso__garantia__venta__cliente__nombre')
     list_filter = ('recibido_conforme', 'fecha_entrega')

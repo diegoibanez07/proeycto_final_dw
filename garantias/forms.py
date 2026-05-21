@@ -15,47 +15,48 @@ from .models import (
 )
 
 
-class StyledModelForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            css_class = 'form-input'
-            if isinstance(field.widget, forms.CheckboxInput):
-                css_class = 'form-check'
-            elif isinstance(field.widget, forms.Select):
-                css_class = 'form-select'
-            elif isinstance(field.widget, forms.Textarea):
-                css_class = 'form-textarea'
-                field.widget.attrs.setdefault('rows', 4)
-            field.widget.attrs['class'] = f"{field.widget.attrs.get('class', '')} {css_class}".strip()
+class FormularioModeloEstilizado(forms.ModelForm):
+    def __init__(self, *argumentos, **opciones):
+        super().__init__(*argumentos, **opciones)
+        for campo in self.fields.values():
+            clase_estilo = 'campo-formulario'
+            if isinstance(campo.widget, forms.CheckboxInput):
+                clase_estilo = 'casilla-formulario'
+            elif isinstance(campo.widget, forms.Select):
+                clase_estilo = 'selector-formulario'
+            elif isinstance(campo.widget, forms.Textarea):
+                clase_estilo = 'area-formulario'
+                campo.widget.attrs.setdefault('rows', 4)
+            clase_actual = campo.widget.attrs.get('class', '')
+            campo.widget.attrs['class'] = f'{clase_actual} {clase_estilo}'.strip()
 
 
-class ClienteForm(StyledModelForm):
+class FormularioCliente(FormularioModeloEstilizado):
     class Meta:
         model = Cliente
         fields = ['tipo_documento', 'documento', 'nombre', 'telefono', 'correo', 'direccion', 'ciudad', 'activo']
 
 
-class CategoriaProductoForm(StyledModelForm):
+class FormularioCategoriaProducto(FormularioModeloEstilizado):
     class Meta:
         model = CategoriaProducto
         fields = ['nombre', 'descripcion', 'activo']
 
 
-class ProductoForm(StyledModelForm):
+class FormularioProducto(FormularioModeloEstilizado):
     class Meta:
         model = Producto
         fields = ['nombre', 'marca', 'modelo', 'serial', 'categoria', 'descripcion', 'activo']
 
 
-class VentaForm(StyledModelForm):
+class FormularioVenta(FormularioModeloEstilizado):
     class Meta:
         model = Venta
         fields = ['cliente', 'producto', 'fecha_venta', 'valor', 'numero_factura', 'observaciones']
         widgets = {'fecha_venta': forms.DateInput(attrs={'type': 'date'})}
 
 
-class GarantiaForm(StyledModelForm):
+class FormularioGarantia(FormularioModeloEstilizado):
     class Meta:
         model = Garantia
         fields = ['venta', 'fecha_inicio', 'fecha_fin', 'estado', 'condiciones']
@@ -65,14 +66,14 @@ class GarantiaForm(StyledModelForm):
         }
 
 
-class EstadoCasoForm(StyledModelForm):
+class FormularioEstadoCaso(FormularioModeloEstilizado):
     class Meta:
         model = EstadoCaso
         fields = ['codigo', 'nombre', 'descripcion', 'color', 'orden', 'es_final', 'activo']
         widgets = {'color': forms.TextInput(attrs={'type': 'color'})}
 
 
-class CasoReparacionForm(StyledModelForm):
+class FormularioCasoReparacion(FormularioModeloEstilizado):
     class Meta:
         model = CasoReparacion
         fields = [
@@ -91,28 +92,28 @@ class CasoReparacionForm(StyledModelForm):
         }
 
 
-class DiagnosticoForm(StyledModelForm):
+class FormularioDiagnostico(FormularioModeloEstilizado):
     class Meta:
         model = Diagnostico
         fields = ['caso', 'tecnico', 'diagnostico', 'solucion', 'requiere_repuesto', 'costo_estimado', 'fecha']
         widgets = {'fecha': forms.DateTimeInput(attrs={'type': 'datetime-local'})}
 
 
-class EvidenciaForm(StyledModelForm):
+class FormularioEvidencia(FormularioModeloEstilizado):
     class Meta:
         model = Evidencia
         fields = ['caso', 'tipo', 'imagen', 'descripcion', 'fecha']
         widgets = {'fecha': forms.DateTimeInput(attrs={'type': 'datetime-local'})}
 
 
-class HistorialEstadoForm(StyledModelForm):
+class FormularioHistorialEstado(FormularioModeloEstilizado):
     class Meta:
         model = HistorialEstado
         fields = ['caso', 'estado', 'fecha', 'comentario']
         widgets = {'fecha': forms.DateTimeInput(attrs={'type': 'datetime-local'})}
 
 
-class EntregaForm(StyledModelForm):
+class FormularioEntrega(FormularioModeloEstilizado):
     class Meta:
         model = Entrega
         fields = ['caso', 'fecha_entrega', 'entregado_a', 'documento_entrega', 'recibido_conforme', 'observaciones']

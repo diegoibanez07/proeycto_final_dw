@@ -1,22 +1,22 @@
 from django.contrib import messages
 from django.db.models import Count, Q
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
 
 from .forms import (
-    CasoReparacionForm,
-    CategoriaProductoForm,
-    ClienteForm,
-    DiagnosticoForm,
-    EntregaForm,
-    EstadoCasoForm,
-    EvidenciaForm,
-    GarantiaForm,
-    HistorialEstadoForm,
-    ProductoForm,
-    VentaForm,
+    FormularioCasoReparacion,
+    FormularioCategoriaProducto,
+    FormularioCliente,
+    FormularioDiagnostico,
+    FormularioEntrega,
+    FormularioEstadoCaso,
+    FormularioEvidencia,
+    FormularioGarantia,
+    FormularioHistorialEstado,
+    FormularioProducto,
+    FormularioVenta,
 )
 from .models import (
     CasoReparacion,
@@ -33,139 +33,152 @@ from .models import (
 )
 
 
-class DashboardView(TemplateView):
+class VistaPanelControl(TemplateView):
     template_name = 'garantias/dashboard.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['total_clientes'] = Cliente.objects.count()
-        context['total_productos'] = Producto.objects.count()
-        context['garantias_vigentes'] = Garantia.objects.filter(
+    def get_context_data(self, **argumentos):
+        contexto = super().get_context_data(**argumentos)
+        contexto['seccion'] = 'panel'
+        contexto['total_clientes'] = Cliente.objects.count()
+        contexto['total_productos'] = Producto.objects.count()
+        contexto['garantias_vigentes'] = Garantia.objects.filter(
             estado='vigente',
             fecha_fin__gte=timezone.localdate(),
         ).count()
-        context['casos_abiertos'] = CasoReparacion.objects.filter(
+        contexto['casos_abiertos'] = CasoReparacion.objects.filter(
             Q(fecha_cierre__isnull=True) | Q(estado_actual__es_final=False)
         ).distinct().count()
-        context['casos_recientes'] = CasoReparacion.objects.select_related(
+        contexto['casos_recientes'] = CasoReparacion.objects.select_related(
             'garantia__venta__cliente',
             'garantia__venta__producto',
             'estado_actual',
         )[:6]
-        context['estados'] = EstadoCaso.objects.annotate(total=Count('casos_actuales')).order_by('orden')
-        return context
+        contexto['estados'] = EstadoCaso.objects.annotate(total=Count('casos_actuales')).order_by('orden')
+        return contexto
 
 
-class BaseListView(ListView):
-    template_name = 'garantias/list.html'
+class VistaBaseLista(ListView):
+    template_name = 'garantias/lista.html'
     paginate_by = 10
-    search_fields = []
-    title = ''
-    subtitle = ''
-    create_url_name = ''
-    section = ''
+    campos_busqueda = []
+    titulo = ''
+    subtitulo = ''
+    nombre_url_creacion = ''
+    seccion = ''
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        query = self.request.GET.get('q', '').strip()
-        if query and self.search_fields:
-            filters = Q()
-            for field in self.search_fields:
-                filters |= Q(**{f'{field}__icontains': query})
-            queryset = queryset.filter(filters)
-        return queryset
+        consulta_modelo = super().get_queryset()
+        texto_busqueda = self.request.GET.get('q', '').strip()
+        if texto_busqueda and self.campos_busqueda:
+            condiciones_busqueda = Q()
+            for campo_busqueda in self.campos_busqueda:
+                condiciones_busqueda |= Q(**{f'{campo_busqueda}__icontains': texto_busqueda})
+            consulta_modelo = consulta_modelo.filter(condiciones_busqueda)
+        return consulta_modelo
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            title=self.title,
-            subtitle=self.subtitle,
-            create_url_name=self.create_url_name,
-            section=self.section,
-            query=self.request.GET.get('q', '').strip(),
+    def get_context_data(self, **argumentos):
+        contexto = super().get_context_data(**argumentos)
+        contexto.update(
+            titulo=self.titulo,
+            subtitulo=self.subtitulo,
+            nombre_url_creacion=self.nombre_url_creacion,
+            seccion=self.seccion,
+            texto_busqueda=self.request.GET.get('q', '').strip(),
+            registros=contexto['object_list'],
         )
-        return context
+        return contexto
 
 
-class BaseDetailView(DetailView):
-    template_name = 'garantias/detail.html'
-    title = ''
-    list_url_name = ''
-    update_url_name = ''
-    delete_url_name = ''
-    section = ''
-    detail_fields = []
+class VistaBaseDetalle(DetailView):
+    template_name = 'garantias/detalle.html'
+    titulo = ''
+    nombre_url_lista = ''
+    nombre_url_edicion = ''
+    nombre_url_eliminacion = ''
+    seccion = ''
+    campos_detalle = []
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(
-            title=self.title,
-            list_url_name=self.list_url_name,
-            update_url_name=self.update_url_name,
-            delete_url_name=self.delete_url_name,
-            section=self.section,
-            details=[(label, self.resolve_value(path)) for label, path in self.detail_fields],
+    def get_context_data(self, **argumentos):
+        contexto = super().get_context_data(**argumentos)
+        contexto.update(
+            titulo=self.titulo,
+            nombre_url_lista=self.nombre_url_lista,
+            nombre_url_edicion=self.nombre_url_edicion,
+            nombre_url_eliminacion=self.nombre_url_eliminacion,
+            seccion=self.seccion,
+            registro=self.object,
+            detalles=[(etiqueta, self.obtener_valor(ruta)) for etiqueta, ruta in self.campos_detalle],
         )
-        return context
+        return contexto
 
-    def resolve_value(self, path):
-        value = self.object
-        for part in path.split('.'):
-            value = getattr(value, part)
-            if callable(value):
-                value = value()
-        return value
+    def obtener_valor(self, ruta):
+        valor = self.object
+        for parte_ruta in ruta.split('.'):
+            valor = getattr(valor, parte_ruta)
+            if callable(valor):
+                valor = valor()
+        return valor
 
 
-class BaseFormView:
-    template_name = 'garantias/form.html'
-    title = ''
-    list_url_name = ''
-    section = ''
+class VistaBaseFormulario:
+    template_name = 'garantias/formulario.html'
+    titulo = ''
+    nombre_url_lista = ''
+    seccion = ''
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(title=self.title, list_url_name=self.list_url_name, section=self.section)
-        return context
+    def get_context_data(self, **argumentos):
+        contexto = super().get_context_data(**argumentos)
+        contexto.update(
+            titulo=self.titulo,
+            nombre_url_lista=self.nombre_url_lista,
+            seccion=self.seccion,
+            formulario=contexto.get('form'),
+        )
+        return contexto
 
-    def form_valid(self, form):
+    def form_valid(self, formulario):
         messages.success(self.request, 'Registro guardado correctamente.')
-        return super().form_valid(form)
+        return super().form_valid(formulario)
 
 
-class BaseDeleteView(DeleteView):
-    template_name = 'garantias/confirm_delete.html'
-    title = ''
-    list_url_name = ''
-    section = ''
+class VistaBaseEliminacion(DeleteView):
+    template_name = 'garantias/confirmar_eliminacion.html'
+    titulo = ''
+    nombre_url_lista = ''
+    seccion = ''
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context.update(title=self.title, list_url_name=self.list_url_name, section=self.section)
-        return context
+    def get_context_data(self, **argumentos):
+        contexto = super().get_context_data(**argumentos)
+        contexto.update(
+            titulo=self.titulo,
+            nombre_url_lista=self.nombre_url_lista,
+            seccion=self.seccion,
+            registro=self.object,
+        )
+        return contexto
 
-    def form_valid(self, form):
+    def form_valid(self, formulario):
         messages.success(self.request, 'Registro eliminado correctamente.')
-        return super().form_valid(form)
+        return super().form_valid(formulario)
 
 
-class ClienteListView(BaseListView):
+class VistaListaCliente(VistaBaseLista):
     model = Cliente
-    title = 'Clientes'
-    subtitle = 'Personas y empresas con equipos vendidos o en reparacion.'
-    create_url_name = 'cliente_create'
-    section = 'clientes'
-    search_fields = ['nombre', 'documento', 'telefono', 'correo']
+    titulo = 'Clientes'
+    subtitulo = 'Personas y empresas con equipos vendidos o en reparacion.'
+    nombre_url_creacion = 'cliente_create'
+    seccion = 'clientes'
+    campos_busqueda = ['nombre', 'documento', 'telefono', 'correo']
 
 
-class ClienteDetailView(BaseDetailView):
+class VistaDetalleCliente(VistaBaseDetalle):
     model = Cliente
-    title = 'Detalle del cliente'
-    list_url_name = 'cliente_list'
-    update_url_name = 'cliente_update'
-    delete_url_name = 'cliente_delete'
-    section = 'clientes'
-    detail_fields = [
+    titulo = 'Detalle del cliente'
+    nombre_url_lista = 'cliente_list'
+    nombre_url_edicion = 'cliente_update'
+    nombre_url_eliminacion = 'cliente_delete'
+    seccion = 'clientes'
+    campos_detalle = [
         ('Documento', 'documento'),
         ('Telefono', 'telefono'),
         ('Correo', 'correo'),
@@ -175,93 +188,93 @@ class ClienteDetailView(BaseDetailView):
     ]
 
 
-class ClienteCreateView(BaseFormView, CreateView):
+class VistaCreacionCliente(VistaBaseFormulario, CreateView):
     model = Cliente
-    form_class = ClienteForm
-    title = 'Nuevo cliente'
-    list_url_name = 'cliente_list'
-    section = 'clientes'
+    form_class = FormularioCliente
+    titulo = 'Nuevo cliente'
+    nombre_url_lista = 'cliente_list'
+    seccion = 'clientes'
 
 
-class ClienteUpdateView(BaseFormView, UpdateView):
+class VistaEdicionCliente(VistaBaseFormulario, UpdateView):
     model = Cliente
-    form_class = ClienteForm
-    title = 'Editar cliente'
-    list_url_name = 'cliente_list'
-    section = 'clientes'
+    form_class = FormularioCliente
+    titulo = 'Editar cliente'
+    nombre_url_lista = 'cliente_list'
+    seccion = 'clientes'
 
 
-class ClienteDeleteView(BaseDeleteView):
+class VistaEliminacionCliente(VistaBaseEliminacion):
     model = Cliente
     success_url = reverse_lazy('cliente_list')
-    title = 'Eliminar cliente'
-    list_url_name = 'cliente_list'
-    section = 'clientes'
+    titulo = 'Eliminar cliente'
+    nombre_url_lista = 'cliente_list'
+    seccion = 'clientes'
 
 
-class CategoriaListView(BaseListView):
+class VistaListaCategoria(VistaBaseLista):
     model = CategoriaProducto
-    title = 'Categorias'
-    subtitle = 'Clasificacion normalizada para los productos.'
-    create_url_name = 'categoria_create'
-    section = 'productos'
-    search_fields = ['nombre', 'descripcion']
+    titulo = 'Categorias'
+    subtitulo = 'Clasificacion normalizada para los productos.'
+    nombre_url_creacion = 'categoria_create'
+    seccion = 'productos'
+    campos_busqueda = ['nombre', 'descripcion']
 
 
-class CategoriaDetailView(BaseDetailView):
+class VistaDetalleCategoria(VistaBaseDetalle):
     model = CategoriaProducto
-    title = 'Detalle de categoria'
-    list_url_name = 'categoria_list'
-    update_url_name = 'categoria_update'
-    delete_url_name = 'categoria_delete'
-    section = 'productos'
-    detail_fields = [('Nombre', 'nombre'), ('Descripcion', 'descripcion'), ('Activo', 'activo')]
+    titulo = 'Detalle de categoria'
+    nombre_url_lista = 'categoria_list'
+    nombre_url_edicion = 'categoria_update'
+    nombre_url_eliminacion = 'categoria_delete'
+    seccion = 'productos'
+    campos_detalle = [('Nombre', 'nombre'), ('Descripcion', 'descripcion'), ('Activo', 'activo')]
 
 
-class CategoriaCreateView(BaseFormView, CreateView):
+class VistaCreacionCategoria(VistaBaseFormulario, CreateView):
     model = CategoriaProducto
-    form_class = CategoriaProductoForm
-    title = 'Nueva categoria'
-    list_url_name = 'categoria_list'
-    section = 'productos'
+    form_class = FormularioCategoriaProducto
+    titulo = 'Nueva categoria'
+    nombre_url_lista = 'categoria_list'
+    seccion = 'productos'
 
 
-class CategoriaUpdateView(BaseFormView, UpdateView):
+class VistaEdicionCategoria(VistaBaseFormulario, UpdateView):
     model = CategoriaProducto
-    form_class = CategoriaProductoForm
-    title = 'Editar categoria'
-    list_url_name = 'categoria_list'
-    section = 'productos'
+    form_class = FormularioCategoriaProducto
+    titulo = 'Editar categoria'
+    nombre_url_lista = 'categoria_list'
+    seccion = 'productos'
 
 
-class CategoriaDeleteView(BaseDeleteView):
+class VistaEliminacionCategoria(VistaBaseEliminacion):
     model = CategoriaProducto
     success_url = reverse_lazy('categoria_list')
-    title = 'Eliminar categoria'
-    list_url_name = 'categoria_list'
-    section = 'productos'
+    titulo = 'Eliminar categoria'
+    nombre_url_lista = 'categoria_list'
+    seccion = 'productos'
 
 
-class ProductoListView(BaseListView):
+class VistaListaProducto(VistaBaseLista):
     model = Producto
-    title = 'Productos'
-    subtitle = 'Inventario serializado para ventas, garantias y reparaciones.'
-    create_url_name = 'producto_create'
-    section = 'productos'
-    search_fields = ['nombre', 'marca', 'modelo', 'serial', 'categoria__nombre']
+    titulo = 'Productos'
+    subtitulo = 'Inventario serializado para ventas, garantias y reparaciones.'
+    nombre_url_creacion = 'producto_create'
+    seccion = 'productos'
+    campos_busqueda = ['nombre', 'marca', 'modelo', 'serial', 'categoria__nombre']
 
     def get_queryset(self):
         return super().get_queryset().select_related('categoria')
 
 
-class ProductoDetailView(BaseDetailView):
+class VistaDetalleProducto(VistaBaseDetalle):
     model = Producto
-    title = 'Detalle del producto'
-    list_url_name = 'producto_list'
-    update_url_name = 'producto_update'
-    delete_url_name = 'producto_delete'
-    section = 'productos'
-    detail_fields = [
+    titulo = 'Detalle del producto'
+    nombre_url_lista = 'producto_list'
+    nombre_url_edicion = 'producto_update'
+    nombre_url_eliminacion = 'producto_delete'
+    seccion = 'productos'
+    campos_detalle = [
         ('Nombre', 'nombre'),
         ('Marca', 'marca'),
         ('Modelo', 'modelo'),
@@ -271,50 +284,50 @@ class ProductoDetailView(BaseDetailView):
     ]
 
 
-class ProductoCreateView(BaseFormView, CreateView):
+class VistaCreacionProducto(VistaBaseFormulario, CreateView):
     model = Producto
-    form_class = ProductoForm
-    title = 'Nuevo producto'
-    list_url_name = 'producto_list'
-    section = 'productos'
+    form_class = FormularioProducto
+    titulo = 'Nuevo producto'
+    nombre_url_lista = 'producto_list'
+    seccion = 'productos'
 
 
-class ProductoUpdateView(BaseFormView, UpdateView):
+class VistaEdicionProducto(VistaBaseFormulario, UpdateView):
     model = Producto
-    form_class = ProductoForm
-    title = 'Editar producto'
-    list_url_name = 'producto_list'
-    section = 'productos'
+    form_class = FormularioProducto
+    titulo = 'Editar producto'
+    nombre_url_lista = 'producto_list'
+    seccion = 'productos'
 
 
-class ProductoDeleteView(BaseDeleteView):
+class VistaEliminacionProducto(VistaBaseEliminacion):
     model = Producto
     success_url = reverse_lazy('producto_list')
-    title = 'Eliminar producto'
-    list_url_name = 'producto_list'
-    section = 'productos'
+    titulo = 'Eliminar producto'
+    nombre_url_lista = 'producto_list'
+    seccion = 'productos'
 
 
-class VentaListView(BaseListView):
+class VistaListaVenta(VistaBaseLista):
     model = Venta
-    title = 'Ventas'
-    subtitle = 'Registro comercial que activa la trazabilidad de garantia.'
-    create_url_name = 'venta_create'
-    section = 'ventas'
-    search_fields = ['numero_factura', 'cliente__nombre', 'producto__serial']
+    titulo = 'Ventas'
+    subtitulo = 'Registro comercial que activa la trazabilidad de garantia.'
+    nombre_url_creacion = 'venta_create'
+    seccion = 'ventas'
+    campos_busqueda = ['numero_factura', 'cliente__nombre', 'producto__serial']
 
     def get_queryset(self):
         return super().get_queryset().select_related('cliente', 'producto')
 
 
-class VentaDetailView(BaseDetailView):
+class VistaDetalleVenta(VistaBaseDetalle):
     model = Venta
-    title = 'Detalle de venta'
-    list_url_name = 'venta_list'
-    update_url_name = 'venta_update'
-    delete_url_name = 'venta_delete'
-    section = 'ventas'
-    detail_fields = [
+    titulo = 'Detalle de venta'
+    nombre_url_lista = 'venta_list'
+    nombre_url_edicion = 'venta_update'
+    nombre_url_eliminacion = 'venta_delete'
+    seccion = 'ventas'
+    campos_detalle = [
         ('Cliente', 'cliente'),
         ('Producto', 'producto'),
         ('Fecha', 'fecha_venta'),
@@ -324,50 +337,50 @@ class VentaDetailView(BaseDetailView):
     ]
 
 
-class VentaCreateView(BaseFormView, CreateView):
+class VistaCreacionVenta(VistaBaseFormulario, CreateView):
     model = Venta
-    form_class = VentaForm
-    title = 'Nueva venta'
-    list_url_name = 'venta_list'
-    section = 'ventas'
+    form_class = FormularioVenta
+    titulo = 'Nueva venta'
+    nombre_url_lista = 'venta_list'
+    seccion = 'ventas'
 
 
-class VentaUpdateView(BaseFormView, UpdateView):
+class VistaEdicionVenta(VistaBaseFormulario, UpdateView):
     model = Venta
-    form_class = VentaForm
-    title = 'Editar venta'
-    list_url_name = 'venta_list'
-    section = 'ventas'
+    form_class = FormularioVenta
+    titulo = 'Editar venta'
+    nombre_url_lista = 'venta_list'
+    seccion = 'ventas'
 
 
-class VentaDeleteView(BaseDeleteView):
+class VistaEliminacionVenta(VistaBaseEliminacion):
     model = Venta
     success_url = reverse_lazy('venta_list')
-    title = 'Eliminar venta'
-    list_url_name = 'venta_list'
-    section = 'ventas'
+    titulo = 'Eliminar venta'
+    nombre_url_lista = 'venta_list'
+    seccion = 'ventas'
 
 
-class GarantiaListView(BaseListView):
+class VistaListaGarantia(VistaBaseLista):
     model = Garantia
-    title = 'Garantias'
-    subtitle = 'Cobertura, vigencia y condiciones asociadas a cada venta.'
-    create_url_name = 'garantia_create'
-    section = 'garantias'
-    search_fields = ['venta__numero_factura', 'venta__cliente__nombre', 'venta__producto__serial', 'estado']
+    titulo = 'Garantias'
+    subtitulo = 'Cobertura, vigencia y condiciones asociadas a cada venta.'
+    nombre_url_creacion = 'garantia_create'
+    seccion = 'garantias'
+    campos_busqueda = ['venta__numero_factura', 'venta__cliente__nombre', 'venta__producto__serial', 'estado']
 
     def get_queryset(self):
         return super().get_queryset().select_related('venta__cliente', 'venta__producto')
 
 
-class GarantiaDetailView(BaseDetailView):
+class VistaDetalleGarantia(VistaBaseDetalle):
     model = Garantia
-    title = 'Detalle de garantia'
-    list_url_name = 'garantia_list'
-    update_url_name = 'garantia_update'
-    delete_url_name = 'garantia_delete'
-    section = 'garantias'
-    detail_fields = [
+    titulo = 'Detalle de garantia'
+    nombre_url_lista = 'garantia_list'
+    nombre_url_edicion = 'garantia_update'
+    nombre_url_eliminacion = 'garantia_delete'
+    seccion = 'garantias'
+    campos_detalle = [
         ('Venta', 'venta'),
         ('Inicio', 'fecha_inicio'),
         ('Fin', 'fecha_fin'),
@@ -377,37 +390,37 @@ class GarantiaDetailView(BaseDetailView):
     ]
 
 
-class GarantiaCreateView(BaseFormView, CreateView):
+class VistaCreacionGarantia(VistaBaseFormulario, CreateView):
     model = Garantia
-    form_class = GarantiaForm
-    title = 'Nueva garantia'
-    list_url_name = 'garantia_list'
-    section = 'garantias'
+    form_class = FormularioGarantia
+    titulo = 'Nueva garantia'
+    nombre_url_lista = 'garantia_list'
+    seccion = 'garantias'
 
 
-class GarantiaUpdateView(BaseFormView, UpdateView):
+class VistaEdicionGarantia(VistaBaseFormulario, UpdateView):
     model = Garantia
-    form_class = GarantiaForm
-    title = 'Editar garantia'
-    list_url_name = 'garantia_list'
-    section = 'garantias'
+    form_class = FormularioGarantia
+    titulo = 'Editar garantia'
+    nombre_url_lista = 'garantia_list'
+    seccion = 'garantias'
 
 
-class GarantiaDeleteView(BaseDeleteView):
+class VistaEliminacionGarantia(VistaBaseEliminacion):
     model = Garantia
     success_url = reverse_lazy('garantia_list')
-    title = 'Eliminar garantia'
-    list_url_name = 'garantia_list'
-    section = 'garantias'
+    titulo = 'Eliminar garantia'
+    nombre_url_lista = 'garantia_list'
+    seccion = 'garantias'
 
 
-class CasoListView(BaseListView):
+class VistaListaCaso(VistaBaseLista):
     model = CasoReparacion
-    title = 'Casos tecnicos'
-    subtitle = 'Flujo completo de ingreso, revision, reparacion y cierre.'
-    create_url_name = 'caso_create'
-    section = 'casos'
-    search_fields = [
+    titulo = 'Casos tecnicos'
+    subtitulo = 'Flujo completo de ingreso, revision, reparacion y cierre.'
+    nombre_url_creacion = 'caso_create'
+    seccion = 'casos'
+    campos_busqueda = [
         'descripcion_falla',
         'tecnico_responsable',
         'garantia__venta__cliente__nombre',
@@ -423,14 +436,14 @@ class CasoListView(BaseListView):
         )
 
 
-class CasoDetailView(BaseDetailView):
+class VistaDetalleCaso(VistaBaseDetalle):
     model = CasoReparacion
-    title = 'Detalle del caso'
-    list_url_name = 'caso_list'
-    update_url_name = 'caso_update'
-    delete_url_name = 'caso_delete'
-    section = 'casos'
-    detail_fields = [
+    titulo = 'Detalle del caso'
+    nombre_url_lista = 'caso_list'
+    nombre_url_edicion = 'caso_update'
+    nombre_url_eliminacion = 'caso_delete'
+    seccion = 'casos'
+    campos_detalle = [
         ('Cliente', 'cliente'),
         ('Producto', 'producto'),
         ('Garantia', 'garantia'),
@@ -449,80 +462,80 @@ class CasoDetailView(BaseDetailView):
             'estado_actual',
         ).prefetch_related('diagnosticos', 'evidencias', 'historial_estados')
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['diagnosticos'] = self.object.diagnosticos.all()[:5]
-        context['evidencias'] = self.object.evidencias.all()[:6]
-        context['historial'] = self.object.historial_estados.select_related('estado')[:8]
-        return context
+    def get_context_data(self, **argumentos):
+        contexto = super().get_context_data(**argumentos)
+        contexto['diagnosticos'] = self.object.diagnosticos.all()[:5]
+        contexto['evidencias'] = self.object.evidencias.all()[:6]
+        contexto['historial'] = self.object.historial_estados.select_related('estado')[:8]
+        return contexto
 
 
-class CasoCreateView(BaseFormView, CreateView):
+class VistaCreacionCaso(VistaBaseFormulario, CreateView):
     model = CasoReparacion
-    form_class = CasoReparacionForm
-    title = 'Nuevo caso tecnico'
-    list_url_name = 'caso_list'
-    section = 'casos'
+    form_class = FormularioCasoReparacion
+    titulo = 'Nuevo caso tecnico'
+    nombre_url_lista = 'caso_list'
+    seccion = 'casos'
 
-    def form_valid(self, form):
-        response = super().form_valid(form)
+    def form_valid(self, formulario):
+        respuesta = super().form_valid(formulario)
         HistorialEstado.objects.create(
             caso=self.object,
             estado=self.object.estado_actual,
             comentario='Apertura del caso tecnico.',
         )
-        return response
+        return respuesta
 
 
-class CasoUpdateView(BaseFormView, UpdateView):
+class VistaEdicionCaso(VistaBaseFormulario, UpdateView):
     model = CasoReparacion
-    form_class = CasoReparacionForm
-    title = 'Editar caso tecnico'
-    list_url_name = 'caso_list'
-    section = 'casos'
+    form_class = FormularioCasoReparacion
+    titulo = 'Editar caso tecnico'
+    nombre_url_lista = 'caso_list'
+    seccion = 'casos'
 
-    def form_valid(self, form):
-        estado_anterior = CasoReparacion.objects.get(pk=self.object.pk).estado_actual_id
-        if form.instance.estado_actual.es_final and not form.instance.fecha_cierre:
-            form.instance.fecha_cierre = timezone.now()
-        response = super().form_valid(form)
-        if estado_anterior != self.object.estado_actual_id:
+    def form_valid(self, formulario):
+        identificador_estado_anterior = CasoReparacion.objects.get(pk=self.object.pk).estado_actual_id
+        if formulario.instance.estado_actual.es_final and not formulario.instance.fecha_cierre:
+            formulario.instance.fecha_cierre = timezone.now()
+        respuesta = super().form_valid(formulario)
+        if identificador_estado_anterior != self.object.estado_actual_id:
             HistorialEstado.objects.create(
                 caso=self.object,
                 estado=self.object.estado_actual,
                 comentario='Cambio de estado desde la edicion del caso.',
             )
-        return response
+        return respuesta
 
 
-class CasoDeleteView(BaseDeleteView):
+class VistaEliminacionCaso(VistaBaseEliminacion):
     model = CasoReparacion
     success_url = reverse_lazy('caso_list')
-    title = 'Eliminar caso tecnico'
-    list_url_name = 'caso_list'
-    section = 'casos'
+    titulo = 'Eliminar caso tecnico'
+    nombre_url_lista = 'caso_list'
+    seccion = 'casos'
 
 
-class DiagnosticoListView(BaseListView):
+class VistaListaDiagnostico(VistaBaseLista):
     model = Diagnostico
-    title = 'Diagnosticos'
-    subtitle = 'Analisis tecnicos y soluciones propuestas.'
-    create_url_name = 'diagnostico_create'
-    section = 'diagnosticos'
-    search_fields = ['tecnico', 'diagnostico', 'solucion', 'caso__garantia__venta__cliente__nombre']
+    titulo = 'Diagnosticos'
+    subtitulo = 'Analisis tecnicos y soluciones propuestas.'
+    nombre_url_creacion = 'diagnostico_create'
+    seccion = 'diagnosticos'
+    campos_busqueda = ['tecnico', 'diagnostico', 'solucion', 'caso__garantia__venta__cliente__nombre']
 
     def get_queryset(self):
         return super().get_queryset().select_related('caso__garantia__venta__cliente')
 
 
-class DiagnosticoDetailView(BaseDetailView):
+class VistaDetalleDiagnostico(VistaBaseDetalle):
     model = Diagnostico
-    title = 'Detalle de diagnostico'
-    list_url_name = 'diagnostico_list'
-    update_url_name = 'diagnostico_update'
-    delete_url_name = 'diagnostico_delete'
-    section = 'diagnosticos'
-    detail_fields = [
+    titulo = 'Detalle de diagnostico'
+    nombre_url_lista = 'diagnostico_list'
+    nombre_url_edicion = 'diagnostico_update'
+    nombre_url_eliminacion = 'diagnostico_delete'
+    seccion = 'diagnosticos'
+    campos_detalle = [
         ('Caso', 'caso'),
         ('Tecnico', 'tecnico'),
         ('Diagnostico', 'diagnostico'),
@@ -533,50 +546,50 @@ class DiagnosticoDetailView(BaseDetailView):
     ]
 
 
-class DiagnosticoCreateView(BaseFormView, CreateView):
+class VistaCreacionDiagnostico(VistaBaseFormulario, CreateView):
     model = Diagnostico
-    form_class = DiagnosticoForm
-    title = 'Nuevo diagnostico'
-    list_url_name = 'diagnostico_list'
-    section = 'diagnosticos'
+    form_class = FormularioDiagnostico
+    titulo = 'Nuevo diagnostico'
+    nombre_url_lista = 'diagnostico_list'
+    seccion = 'diagnosticos'
 
 
-class DiagnosticoUpdateView(BaseFormView, UpdateView):
+class VistaEdicionDiagnostico(VistaBaseFormulario, UpdateView):
     model = Diagnostico
-    form_class = DiagnosticoForm
-    title = 'Editar diagnostico'
-    list_url_name = 'diagnostico_list'
-    section = 'diagnosticos'
+    form_class = FormularioDiagnostico
+    titulo = 'Editar diagnostico'
+    nombre_url_lista = 'diagnostico_list'
+    seccion = 'diagnosticos'
 
 
-class DiagnosticoDeleteView(BaseDeleteView):
+class VistaEliminacionDiagnostico(VistaBaseEliminacion):
     model = Diagnostico
     success_url = reverse_lazy('diagnostico_list')
-    title = 'Eliminar diagnostico'
-    list_url_name = 'diagnostico_list'
-    section = 'diagnosticos'
+    titulo = 'Eliminar diagnostico'
+    nombre_url_lista = 'diagnostico_list'
+    seccion = 'diagnosticos'
 
 
-class EvidenciaListView(BaseListView):
+class VistaListaEvidencia(VistaBaseLista):
     model = Evidencia
-    title = 'Fotos y evidencias'
-    subtitle = 'Archivos de ingreso, reparacion, diagnostico y entrega.'
-    create_url_name = 'evidencia_create'
-    section = 'evidencias'
-    search_fields = ['descripcion', 'tipo', 'caso__garantia__venta__cliente__nombre']
+    titulo = 'Fotos y evidencias'
+    subtitulo = 'Archivos de ingreso, reparacion, diagnostico y entrega.'
+    nombre_url_creacion = 'evidencia_create'
+    seccion = 'evidencias'
+    campos_busqueda = ['descripcion', 'tipo', 'caso__garantia__venta__cliente__nombre']
 
     def get_queryset(self):
         return super().get_queryset().select_related('caso__garantia__venta__cliente')
 
 
-class EvidenciaDetailView(BaseDetailView):
+class VistaDetalleEvidencia(VistaBaseDetalle):
     model = Evidencia
-    title = 'Detalle de evidencia'
-    list_url_name = 'evidencia_list'
-    update_url_name = 'evidencia_update'
-    delete_url_name = 'evidencia_delete'
-    section = 'evidencias'
-    detail_fields = [
+    titulo = 'Detalle de evidencia'
+    nombre_url_lista = 'evidencia_list'
+    nombre_url_edicion = 'evidencia_update'
+    nombre_url_eliminacion = 'evidencia_delete'
+    seccion = 'evidencias'
+    campos_detalle = [
         ('Caso', 'caso'),
         ('Tipo', 'get_tipo_display'),
         ('Descripcion', 'descripcion'),
@@ -584,47 +597,47 @@ class EvidenciaDetailView(BaseDetailView):
     ]
 
 
-class EvidenciaCreateView(BaseFormView, CreateView):
+class VistaCreacionEvidencia(VistaBaseFormulario, CreateView):
     model = Evidencia
-    form_class = EvidenciaForm
-    title = 'Nueva evidencia'
-    list_url_name = 'evidencia_list'
-    section = 'evidencias'
+    form_class = FormularioEvidencia
+    titulo = 'Nueva evidencia'
+    nombre_url_lista = 'evidencia_list'
+    seccion = 'evidencias'
 
 
-class EvidenciaUpdateView(BaseFormView, UpdateView):
+class VistaEdicionEvidencia(VistaBaseFormulario, UpdateView):
     model = Evidencia
-    form_class = EvidenciaForm
-    title = 'Editar evidencia'
-    list_url_name = 'evidencia_list'
-    section = 'evidencias'
+    form_class = FormularioEvidencia
+    titulo = 'Editar evidencia'
+    nombre_url_lista = 'evidencia_list'
+    seccion = 'evidencias'
 
 
-class EvidenciaDeleteView(BaseDeleteView):
+class VistaEliminacionEvidencia(VistaBaseEliminacion):
     model = Evidencia
     success_url = reverse_lazy('evidencia_list')
-    title = 'Eliminar evidencia'
-    list_url_name = 'evidencia_list'
-    section = 'evidencias'
+    titulo = 'Eliminar evidencia'
+    nombre_url_lista = 'evidencia_list'
+    seccion = 'evidencias'
 
 
-class EstadoListView(BaseListView):
+class VistaListaEstado(VistaBaseLista):
     model = EstadoCaso
-    title = 'Estados'
-    subtitle = 'Catalogo del flujo tecnico y de entrega.'
-    create_url_name = 'estado_create'
-    section = 'estados'
-    search_fields = ['codigo', 'nombre', 'descripcion']
+    titulo = 'Estados'
+    subtitulo = 'Catalogo del flujo tecnico y de entrega.'
+    nombre_url_creacion = 'estado_create'
+    seccion = 'estados'
+    campos_busqueda = ['codigo', 'nombre', 'descripcion']
 
 
-class EstadoDetailView(BaseDetailView):
+class VistaDetalleEstado(VistaBaseDetalle):
     model = EstadoCaso
-    title = 'Detalle de estado'
-    list_url_name = 'estado_list'
-    update_url_name = 'estado_update'
-    delete_url_name = 'estado_delete'
-    section = 'estados'
-    detail_fields = [
+    titulo = 'Detalle de estado'
+    nombre_url_lista = 'estado_list'
+    nombre_url_edicion = 'estado_update'
+    nombre_url_eliminacion = 'estado_delete'
+    seccion = 'estados'
+    campos_detalle = [
         ('Codigo', 'codigo'),
         ('Nombre', 'nombre'),
         ('Orden', 'orden'),
@@ -634,104 +647,104 @@ class EstadoDetailView(BaseDetailView):
     ]
 
 
-class EstadoCreateView(BaseFormView, CreateView):
+class VistaCreacionEstado(VistaBaseFormulario, CreateView):
     model = EstadoCaso
-    form_class = EstadoCasoForm
-    title = 'Nuevo estado'
-    list_url_name = 'estado_list'
-    section = 'estados'
+    form_class = FormularioEstadoCaso
+    titulo = 'Nuevo estado'
+    nombre_url_lista = 'estado_list'
+    seccion = 'estados'
 
 
-class EstadoUpdateView(BaseFormView, UpdateView):
+class VistaEdicionEstado(VistaBaseFormulario, UpdateView):
     model = EstadoCaso
-    form_class = EstadoCasoForm
-    title = 'Editar estado'
-    list_url_name = 'estado_list'
-    section = 'estados'
+    form_class = FormularioEstadoCaso
+    titulo = 'Editar estado'
+    nombre_url_lista = 'estado_list'
+    seccion = 'estados'
 
 
-class EstadoDeleteView(BaseDeleteView):
+class VistaEliminacionEstado(VistaBaseEliminacion):
     model = EstadoCaso
     success_url = reverse_lazy('estado_list')
-    title = 'Eliminar estado'
-    list_url_name = 'estado_list'
-    section = 'estados'
+    titulo = 'Eliminar estado'
+    nombre_url_lista = 'estado_list'
+    seccion = 'estados'
 
 
-class HistorialListView(BaseListView):
+class VistaListaHistorial(VistaBaseLista):
     model = HistorialEstado
-    title = 'Historial de estados'
-    subtitle = 'Auditoria cronologica de cada movimiento del caso.'
-    create_url_name = 'historial_create'
-    section = 'estados'
-    search_fields = ['comentario', 'estado__nombre', 'caso__garantia__venta__cliente__nombre']
+    titulo = 'Historial de estados'
+    subtitulo = 'Auditoria cronologica de cada movimiento del caso.'
+    nombre_url_creacion = 'historial_create'
+    seccion = 'estados'
+    campos_busqueda = ['comentario', 'estado__nombre', 'caso__garantia__venta__cliente__nombre']
 
     def get_queryset(self):
         return super().get_queryset().select_related('caso', 'estado')
 
 
-class HistorialDetailView(BaseDetailView):
+class VistaDetalleHistorial(VistaBaseDetalle):
     model = HistorialEstado
-    title = 'Detalle de historial'
-    list_url_name = 'historial_list'
-    update_url_name = 'historial_update'
-    delete_url_name = 'historial_delete'
-    section = 'estados'
-    detail_fields = [('Caso', 'caso'), ('Estado', 'estado'), ('Fecha', 'fecha'), ('Comentario', 'comentario')]
+    titulo = 'Detalle de historial'
+    nombre_url_lista = 'historial_list'
+    nombre_url_edicion = 'historial_update'
+    nombre_url_eliminacion = 'historial_delete'
+    seccion = 'estados'
+    campos_detalle = [('Caso', 'caso'), ('Estado', 'estado'), ('Fecha', 'fecha'), ('Comentario', 'comentario')]
 
 
-class HistorialCreateView(BaseFormView, CreateView):
+class VistaCreacionHistorial(VistaBaseFormulario, CreateView):
     model = HistorialEstado
-    form_class = HistorialEstadoForm
-    title = 'Nuevo movimiento'
-    list_url_name = 'historial_list'
-    section = 'estados'
+    form_class = FormularioHistorialEstado
+    titulo = 'Nuevo movimiento'
+    nombre_url_lista = 'historial_list'
+    seccion = 'estados'
 
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        form.instance.caso.estado_actual = form.instance.estado
-        if form.instance.estado.es_final and not form.instance.caso.fecha_cierre:
-            form.instance.caso.fecha_cierre = form.instance.fecha
-        form.instance.caso.save(update_fields=['estado_actual', 'fecha_cierre', 'actualizado'])
-        return response
+    def form_valid(self, formulario):
+        respuesta = super().form_valid(formulario)
+        formulario.instance.caso.estado_actual = formulario.instance.estado
+        if formulario.instance.estado.es_final and not formulario.instance.caso.fecha_cierre:
+            formulario.instance.caso.fecha_cierre = formulario.instance.fecha
+        formulario.instance.caso.save(update_fields=['estado_actual', 'fecha_cierre', 'actualizado'])
+        return respuesta
 
 
-class HistorialUpdateView(BaseFormView, UpdateView):
+class VistaEdicionHistorial(VistaBaseFormulario, UpdateView):
     model = HistorialEstado
-    form_class = HistorialEstadoForm
-    title = 'Editar movimiento'
-    list_url_name = 'historial_list'
-    section = 'estados'
+    form_class = FormularioHistorialEstado
+    titulo = 'Editar movimiento'
+    nombre_url_lista = 'historial_list'
+    seccion = 'estados'
 
 
-class HistorialDeleteView(BaseDeleteView):
+class VistaEliminacionHistorial(VistaBaseEliminacion):
     model = HistorialEstado
     success_url = reverse_lazy('historial_list')
-    title = 'Eliminar movimiento'
-    list_url_name = 'historial_list'
-    section = 'estados'
+    titulo = 'Eliminar movimiento'
+    nombre_url_lista = 'historial_list'
+    seccion = 'estados'
 
 
-class EntregaListView(BaseListView):
+class VistaListaEntrega(VistaBaseLista):
     model = Entrega
-    title = 'Entregas'
-    subtitle = 'Cierre documentado del producto reparado o devuelto.'
-    create_url_name = 'entrega_create'
-    section = 'entregas'
-    search_fields = ['entregado_a', 'documento_entrega', 'caso__garantia__venta__cliente__nombre']
+    titulo = 'Entregas'
+    subtitulo = 'Cierre documentado del producto reparado o devuelto.'
+    nombre_url_creacion = 'entrega_create'
+    seccion = 'entregas'
+    campos_busqueda = ['entregado_a', 'documento_entrega', 'caso__garantia__venta__cliente__nombre']
 
     def get_queryset(self):
         return super().get_queryset().select_related('caso__garantia__venta__cliente')
 
 
-class EntregaDetailView(BaseDetailView):
+class VistaDetalleEntrega(VistaBaseDetalle):
     model = Entrega
-    title = 'Detalle de entrega'
-    list_url_name = 'entrega_list'
-    update_url_name = 'entrega_update'
-    delete_url_name = 'entrega_delete'
-    section = 'entregas'
-    detail_fields = [
+    titulo = 'Detalle de entrega'
+    nombre_url_lista = 'entrega_list'
+    nombre_url_edicion = 'entrega_update'
+    nombre_url_eliminacion = 'entrega_delete'
+    seccion = 'entregas'
+    campos_detalle = [
         ('Caso', 'caso'),
         ('Fecha', 'fecha_entrega'),
         ('Entregado a', 'entregado_a'),
@@ -741,15 +754,15 @@ class EntregaDetailView(BaseDetailView):
     ]
 
 
-class EntregaCreateView(BaseFormView, CreateView):
+class VistaCreacionEntrega(VistaBaseFormulario, CreateView):
     model = Entrega
-    form_class = EntregaForm
-    title = 'Nueva entrega'
-    list_url_name = 'entrega_list'
-    section = 'entregas'
+    form_class = FormularioEntrega
+    titulo = 'Nueva entrega'
+    nombre_url_lista = 'entrega_list'
+    seccion = 'entregas'
 
-    def form_valid(self, form):
-        response = super().form_valid(form)
+    def form_valid(self, formulario):
+        respuesta = super().form_valid(formulario)
         estado_final = EstadoCaso.objects.filter(es_final=True, activo=True).order_by('orden').last()
         if estado_final:
             caso = self.object.caso
@@ -762,35 +775,41 @@ class EntregaCreateView(BaseFormView, CreateView):
                 fecha=self.object.fecha_entrega,
                 comentario='Caso cerrado por entrega del producto.',
             )
-        return response
+        return respuesta
 
 
-class EntregaUpdateView(BaseFormView, UpdateView):
+class VistaEdicionEntrega(VistaBaseFormulario, UpdateView):
     model = Entrega
-    form_class = EntregaForm
-    title = 'Editar entrega'
-    list_url_name = 'entrega_list'
-    section = 'entregas'
+    form_class = FormularioEntrega
+    titulo = 'Editar entrega'
+    nombre_url_lista = 'entrega_list'
+    seccion = 'entregas'
 
 
-class EntregaDeleteView(BaseDeleteView):
+class VistaEliminacionEntrega(VistaBaseEliminacion):
     model = Entrega
     success_url = reverse_lazy('entrega_list')
-    title = 'Eliminar entrega'
-    list_url_name = 'entrega_list'
-    section = 'entregas'
+    titulo = 'Eliminar entrega'
+    nombre_url_lista = 'entrega_list'
+    seccion = 'entregas'
 
 
-def flujo_rapido(request, caso_id):
-    caso = CasoReparacion.objects.get(pk=caso_id)
-    siguiente = EstadoCaso.objects.filter(activo=True, orden__gt=caso.estado_actual.orden).order_by('orden').first()
-    if siguiente:
-        caso.estado_actual = siguiente
-        if siguiente.es_final and not caso.fecha_cierre:
+def avanzar_estado_caso(request, caso_id):
+    caso = get_object_or_404(CasoReparacion, pk=caso_id)
+    siguiente_estado = EstadoCaso.objects.filter(
+        activo=True,
+        orden__gt=caso.estado_actual.orden,
+    ).order_by('orden').first()
+    if siguiente_estado:
+        caso.estado_actual = siguiente_estado
+        if siguiente_estado.es_final and not caso.fecha_cierre:
             caso.fecha_cierre = timezone.now()
         caso.save(update_fields=['estado_actual', 'fecha_cierre', 'actualizado'])
-        HistorialEstado.objects.create(caso=caso, estado=siguiente, comentario='Avance rapido de estado.')
-        messages.success(request, f'Caso movido a {siguiente.nombre}.')
+        HistorialEstado.objects.create(
+            caso=caso,
+            estado=siguiente_estado,
+            comentario='Avance rapido de estado.',
+        )
+        messages.success(request, f'Caso movido a {siguiente_estado.nombre}.')
     return redirect(caso)
 
-# Create your views here.

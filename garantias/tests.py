@@ -7,7 +7,7 @@ from django.urls import reverse
 from .models import CategoriaProducto, Cliente, EstadoCaso, Garantia, Producto, Venta
 
 
-class GarantiasModelTests(TestCase):
+class PruebasModelosGarantias(TestCase):
     def setUp(self):
         self.cliente = Cliente.objects.create(
             tipo_documento='CC',
@@ -47,9 +47,9 @@ class GarantiasModelTests(TestCase):
         self.assertTrue(EstadoCaso.objects.filter(es_final=True).exists())
 
 
-class GarantiasViewTests(TestCase):
+class PruebasVistasGarantias(TestCase):
     def test_paginas_principales_responden(self):
-        names = [
+        nombres = [
             'dashboard',
             'cliente_list',
             'producto_list',
@@ -62,9 +62,7 @@ class GarantiasViewTests(TestCase):
             'historial_list',
             'entrega_list',
         ]
-        for name in names:
-            with self.subTest(name=name):
-                response = self.client.get(reverse(name))
-                self.assertEqual(response.status_code, 200)
-
-# Create your tests here.
+        for nombre in nombres:
+            with self.subTest(nombre=nombre):
+                respuesta = self.client.get(reverse(nombre))
+                self.assertEqual(respuesta.status_code, 200)
