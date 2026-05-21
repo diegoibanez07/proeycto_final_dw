@@ -3,6 +3,9 @@
 Sistema Django para negocios que necesitan controlar productos vendidos,
 garantias, diagnosticos tecnicos, evidencias, estados y entrega final.
 
+La explicacion completa del flujo, roles, pantallas y funcionamiento esta en
+[DOCUMENTACION.md](DOCUMENTACION.md).
+
 ## Modulos
 
 - Clientes
