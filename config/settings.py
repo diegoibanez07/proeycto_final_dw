@@ -26,6 +26,19 @@ if archivo_entorno.exists():
         os.environ.setdefault(nombre_variable.strip(), valor_variable.strip().strip('"').strip("'"))
 
 
+def obtener_booleano_entorno(nombre_variable, valor_por_defecto):
+    valor = os.environ.get(nombre_variable)
+    if valor is None:
+        return valor_por_defecto
+
+    valor_normalizado = valor.strip().lower()
+    if valor_normalizado in {'1', 'true', 'yes', 'si', 'on'}:
+        return True
+    if valor_normalizado in {'0', 'false', 'no', 'off'}:
+        return False
+    return valor_por_defecto
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -36,7 +49,10 @@ SECRET_KEY = os.environ.get(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', '1') == '1'
+DEBUG = obtener_booleano_entorno(
+    'DJANGO_DEBUG',
+    obtener_booleano_entorno('DEBUG', True),
+)
 
 ALLOWED_HOSTS = [
     host.strip()
@@ -67,6 +83,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+if not DEBUG:
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
 
 ROOT_URLCONF = 'config.urls'
 
@@ -150,6 +169,8 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+if not DEBUG:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'

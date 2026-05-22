@@ -5,8 +5,8 @@ garantias, diagnosticos tecnicos, evidencias, estados y entrega final.
 
 El proyecto conserva una estructura Django por aplicaciones, rutas y plantillas
 como la base indicada en `https://github.com/ithan1985/django.git`, pero
-orientada al dominio de garantias y reparaciones. No se agrego Docker/YAML en
-esta fase para permitir pruebas locales con `runserver`.
+orientada al dominio de garantias y reparaciones. Incluye ejecucion local con
+entorno virtual y opcion Docker con PostgreSQL.
 
 La explicacion completa del flujo, roles, pantallas y funcionamiento esta en
 [DOCUMENTACION.md](DOCUMENTACION.md).
@@ -91,3 +91,63 @@ POSTGRES_PORT=5432
 
 Cuando esas variables existen, `config/settings.py` usa PostgreSQL. Si no
 existen, usa SQLite para desarrollo local.
+
+## Docker
+
+El proyecto incluye:
+
+- `Dockerfile`: construye la imagen Django con Gunicorn.
+- `docker-compose.yml`: levanta Django y PostgreSQL.
+- `.dockerignore`: evita copiar entorno virtual, SQLite local, media y archivos temporales.
+- `docker/entrypoint.sh`: ejecuta migraciones, recolecta estaticos y crea superusuario si se configuro.
+
+Para construir y levantar todo:
+
+```powershell
+docker compose up --build
+```
+
+La aplicacion queda en:
+
+```text
+http://127.0.0.1:8000/
+```
+
+El contenedor crea por defecto este superusuario si no existe:
+
+```text
+usuario: digoe
+clave: diego.01
+```
+
+Para cargar datos realistas automaticamente en la primera ejecucion:
+
+```powershell
+$env:CARGAR_DATOS_INICIALES="1"
+$env:CANTIDAD_DATOS_INICIALES="1000"
+docker compose up --build
+```
+
+Para activar modo desarrollo dentro de Docker:
+
+```powershell
+$env:DJANGO_DEBUG="1"
+docker compose up --build
+```
+
+Si la base ya tiene clientes, el contenedor no vuelve a cargar datos para evitar
+duplicados.
+
+Tambien puedes ejecutar comandos dentro del contenedor:
+
+```powershell
+docker compose exec web python manage.py test
+docker compose exec web python manage.py createsuperuser
+docker compose exec web python manage.py cargar_datos_reales --cantidad 1000 --limpiar
+```
+
+Esto no impide trabajar localmente. Puedes seguir usando:
+
+```powershell
+.\.venv\Scripts\python.exe manage.py runserver
+```

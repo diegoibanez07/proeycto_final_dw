@@ -1,0 +1,49 @@
+services:
+  web:
+    build: .
+    image: garantiapro:latest
+    container_name: garantiapro_web
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-cambia-esta-clave-docker-garantias}
+      DEBUG: ${DJANGO_DEBUG:-0}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-127.0.0.1,localhost,0.0.0.0}
+      POSTGRES_DB: ${POSTGRES_DB:-garantias_db}
+      POSTGRES_USER: ${POSTGRES_USER:-garantias_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-garantias_password}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME:-digoe}
+      DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL:-digoe@example.com}
+      DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD:-diego.01}
+      CARGAR_DATOS_INICIALES: ${CARGAR_DATOS_INICIALES:-0}
+      CANTIDAD_DATOS_INICIALES: ${CANTIDAD_DATOS_INICIALES:-100}
+    volumes:
+      - media_data:/app/media
+      - static_data:/app/staticfiles
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    container_name: garantiapro_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-garantias_db}
+      POSTGRES_USER: ${POSTGRES_USER:-garantias_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-garantias_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
+  media_data:
+  static_data:
