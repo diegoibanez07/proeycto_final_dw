@@ -2,13 +2,16 @@
 
 ## 1. Proposito de la aplicacion
 
-La aplicacion es una plataforma interna para controlar garantias y reparaciones.
+La aplicacion tiene un modulo publico y modulos privados. El modulo publico
+permite mostrar los servicios y consultar el estado basico de un producto sin
+login. Los modulos privados permiten controlar garantias y reparaciones desde la
+empresa.
 Su objetivo es que la empresa tenga trazabilidad completa desde que vende un
 producto hasta que lo recibe por garantia, lo diagnostica, lo repara, adjunta
 evidencias y lo entrega al cliente.
 
-El sistema no es un portal publico para clientes finales. Los clientes no se
-registran ni entran al sistema. La gestion la hace el personal de la empresa.
+Los clientes no se registran ni entran al panel privado. Solo pueden usar las
+paginas publicas de informacion y consulta.
 
 Flujo general:
 
@@ -23,7 +26,19 @@ Cliente -> Producto -> Venta -> Garantia -> Caso tecnico
 
 ## 2. Entrada al sistema
 
-La aplicacion exige inicio de sesion.
+Modulo publico:
+
+```text
+http://127.0.0.1:8000/
+```
+
+Panel privado:
+
+```text
+http://127.0.0.1:8000/panel/
+```
+
+El panel privado exige inicio de sesion.
 
 URL de ingreso:
 
@@ -50,6 +65,35 @@ aplicacion segun cada rol.
 
 Importante: estos usuarios existen en la base local donde fueron creados. No se
 suben a GitHub porque la base de datos local no se versiona.
+
+## 3.1. Modulo publico sin login
+
+El modulo publico es para personas externas o clientes que no deben entrar al
+panel privado.
+
+Rutas:
+
+```text
+http://127.0.0.1:8000/
+http://127.0.0.1:8000/servicios/
+http://127.0.0.1:8000/consulta-estado/
+```
+
+Que puede hacer una persona sin login:
+
+- Ver que ofrece la empresa.
+- Entender el flujo de atencion.
+- Consultar el estado basico de un caso con documento y numero de caso o
+  factura.
+
+Que no puede hacer:
+
+- Entrar al panel privado.
+- Crear casos.
+- Editar informacion.
+- Ver diagnosticos internos completos.
+- Ver evidencias privadas.
+- Eliminar datos.
 
 ## 4. Roles del sistema
 

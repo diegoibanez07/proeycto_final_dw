@@ -47,8 +47,8 @@ python manage.py test
 Resultado:
 
 ```text
-Found 25 test(s).
-Ran 25 tests
+Found 30 test(s).
+Ran 30 tests
 OK
 ```
 
@@ -191,6 +191,21 @@ Caso probado:
 Resultado esperado:
 
 - Redireccion al login.
+
+### Modulo publico
+
+Casos probados:
+
+- Inicio publico abre sin login.
+- Servicios publicos abre sin login.
+- Consulta publica encuentra caso por factura.
+- Consulta publica encuentra caso por numero de caso.
+- Consulta publica no muestra informacion si el documento no coincide.
+
+Resultado esperado:
+
+- Las paginas publicas responden 200 sin autenticacion.
+- La consulta solo devuelve estado cuando documento y codigo coinciden.
 
 ### Usuario sin rol
 

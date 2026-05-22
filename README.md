@@ -3,6 +3,11 @@
 Sistema Django para negocios que necesitan controlar productos vendidos,
 garantias, diagnosticos tecnicos, evidencias, estados y entrega final.
 
+El proyecto conserva una estructura Django por aplicaciones, rutas y plantillas
+como la base indicada en `https://github.com/ithan1985/django.git`, pero
+orientada al dominio de garantias y reparaciones. No se agrego Docker/YAML en
+esta fase para permitir pruebas locales con `runserver`.
+
 La explicacion completa del flujo, roles, pantallas y funcionamiento esta en
 [DOCUMENTACION.md](DOCUMENTACION.md).
 
@@ -14,6 +19,7 @@ El informe de pruebas, validaciones y analisis de calidad esta en
 
 ## Modulos
 
+- Publico: inicio, servicios y consulta de estado sin login
 - Clientes
 - Productos y categorias
 - Ventas
@@ -49,6 +55,16 @@ python manage.py runserver
 ```
 
 La app queda disponible en `http://127.0.0.1:8000/`.
+
+Rutas principales:
+
+```text
+/                  Modulo publico
+/servicios/         Servicios ofrecidos
+/consulta-estado/   Consulta publica de estado
+/panel/             Panel privado con login
+/cuenta/login/      Ingreso del personal
+```
 
 ## Cargar datos realistas
 

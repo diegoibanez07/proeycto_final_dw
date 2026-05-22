@@ -1,0 +1,76 @@
+{% extends 'publico/base_publico.html' %}
+
+{% block title %}Consultar estado | GarantiaPro{% endblock %}
+
+{% block content %}
+<section class="consulta-publica">
+    <div class="panel-consulta-publica">
+        <span class="etiqueta-publica">Consulta publica</span>
+        <h1>Consulta el estado de tu producto.</h1>
+        <p>
+            Ingresa el documento del cliente y el numero de caso o factura. No
+            necesitas usuario ni contrasena.
+        </p>
+        <form method="get" class="formulario-publico">
+            <div>
+                <label for="{{ formulario.documento.id_for_label }}">{{ formulario.documento.label }}</label>
+                {{ formulario.documento }}
+                {% for error in formulario.documento.errors %}<span class="texto-error">{{ error }}</span>{% endfor %}
+            </div>
+            <div>
+                <label for="{{ formulario.codigo.id_for_label }}">{{ formulario.codigo.label }}</label>
+                {{ formulario.codigo }}
+                {% for error in formulario.codigo.errors %}<span class="texto-error">{{ error }}</span>{% endfor %}
+            </div>
+            <button class="boton-publico primario-publico" type="submit">Consultar</button>
+        </form>
+    </div>
+
+    <div class="resultado-publico">
+        {% if caso %}
+            <span class="etiqueta-publica">Resultado encontrado</span>
+            <h2>Caso #{{ caso.id }}</h2>
+            <dl>
+                <div>
+                    <dt>Cliente</dt>
+                    <dd>{{ caso.cliente.nombre }}</dd>
+                </div>
+                <div>
+                    <dt>Producto</dt>
+                    <dd>{{ caso.producto.nombre }} {{ caso.producto.marca }} {{ caso.producto.modelo }}</dd>
+                </div>
+                <div>
+                    <dt>Serial</dt>
+                    <dd>{{ caso.producto.serial }}</dd>
+                </div>
+                <div>
+                    <dt>Estado actual</dt>
+                    <dd>{{ caso.estado_actual.nombre }}</dd>
+                </div>
+                <div>
+                    <dt>Ingreso</dt>
+                    <dd>{{ caso.fecha_ingreso|date:'d/m/Y H:i' }}</dd>
+                </div>
+                <div>
+                    <dt>Factura</dt>
+                    <dd>{{ caso.garantia.venta.numero_factura }}</dd>
+                </div>
+                {% if caso.fecha_cierre %}
+                    <div>
+                        <dt>Cierre</dt>
+                        <dd>{{ caso.fecha_cierre|date:'d/m/Y H:i' }}</dd>
+                    </div>
+                {% endif %}
+            </dl>
+        {% elif busqueda_realizada %}
+            <span class="etiqueta-publica">Sin resultado</span>
+            <h2>No encontramos un caso con esos datos.</h2>
+            <p>Revisa que el documento y el numero de caso o factura esten escritos correctamente.</p>
+        {% else %}
+            <span class="etiqueta-publica">Privacidad</span>
+            <h2>Solo mostramos informacion basica del estado.</h2>
+            <p>Los diagnosticos, evidencias internas y datos privados son gestionados por el personal autorizado.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

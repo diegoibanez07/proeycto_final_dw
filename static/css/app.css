@@ -807,3 +807,281 @@ h2 {
         font-size: 1.95rem;
     }
 }
+
+.sitio-publico {
+    min-height: 100vh;
+    background:
+        linear-gradient(90deg, rgba(15, 23, 42, .05) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(15, 23, 42, .05) 1px, transparent 1px),
+        linear-gradient(135deg, #f8fafc 0%, #eff6ff 44%, #ecfdf5 100%);
+    background-size: 36px 36px, 36px 36px, auto;
+}
+
+.cabecera-publica {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    width: min(1180px, calc(100vw - 32px));
+    margin: 0 auto;
+    padding: 18px 0;
+    backdrop-filter: blur(16px);
+}
+
+.marca-publica {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 900;
+}
+
+.marca-publica span {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border-radius: var(--radio);
+    background: var(--tinta);
+    color: #fff;
+}
+
+.menu-publico {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.menu-publico a {
+    min-height: 38px;
+    padding: 9px 12px;
+    border-radius: var(--radio);
+    color: var(--texto-suave);
+    font-weight: 800;
+}
+
+.menu-publico a:hover,
+.menu-publico .enlace-ingreso {
+    background: rgba(255, 255, 255, .74);
+    color: var(--texto-principal);
+    box-shadow: var(--sombra-corta);
+}
+
+.portada-publica,
+.pagina-publica,
+.consulta-publica,
+.bloques-publicos,
+.lista-servicios-publicos {
+    width: min(1180px, calc(100vw - 32px));
+    margin: 0 auto;
+}
+
+.portada-publica {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 24px;
+    align-items: stretch;
+    min-height: 560px;
+    padding: 58px 0 26px;
+}
+
+.portada-publica h1,
+.pagina-publica h1,
+.consulta-publica h1 {
+    max-width: 850px;
+    margin-bottom: 16px;
+    font-size: 4.6rem;
+    line-height: .95;
+}
+
+.portada-publica p,
+.pagina-publica p,
+.consulta-publica p {
+    max-width: 720px;
+    color: var(--texto-suave);
+    font-size: 1.08rem;
+}
+
+.etiqueta-publica {
+    display: inline-flex;
+    margin-bottom: 12px;
+    color: var(--verde-oscuro);
+    font-size: .78rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+}
+
+.acciones-publicas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.boton-publico {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: var(--radio);
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.primario-publico {
+    background: linear-gradient(135deg, var(--verde), var(--verde-oscuro));
+    color: #fff;
+    box-shadow: 0 12px 22px rgba(8, 127, 91, .24);
+}
+
+.secundario-publico {
+    border: 1px solid var(--linea);
+    background: rgba(255, 255, 255, .78);
+}
+
+.tarjeta-portada-publica,
+.bloques-publicos article,
+.lista-servicios-publicos article,
+.panel-consulta-publica,
+.resultado-publico {
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: rgba(255, 255, 255, .82);
+    box-shadow: var(--sombra-suave);
+    backdrop-filter: blur(16px);
+}
+
+.tarjeta-portada-publica {
+    align-self: end;
+    padding: 24px;
+}
+
+.tarjeta-portada-publica span {
+    color: var(--texto-suave);
+    font-weight: 900;
+}
+
+.tarjeta-portada-publica ol {
+    display: grid;
+    gap: 12px;
+    margin: 18px 0 0;
+    padding-left: 22px;
+    font-weight: 800;
+}
+
+.bloques-publicos,
+.lista-servicios-publicos {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    padding-bottom: 42px;
+}
+
+.bloques-publicos article,
+.lista-servicios-publicos article {
+    padding: 20px;
+}
+
+.bloques-publicos strong,
+.lista-servicios-publicos h2 {
+    display: block;
+    margin-bottom: 8px;
+}
+
+.bloques-publicos p,
+.lista-servicios-publicos p {
+    margin-bottom: 0;
+    color: var(--texto-suave);
+}
+
+.pagina-publica {
+    padding: 62px 0 26px;
+}
+
+.consulta-publica {
+    display: grid;
+    grid-template-columns: minmax(0, .95fr) minmax(340px, .75fr);
+    gap: 18px;
+    padding: 56px 0 42px;
+}
+
+.panel-consulta-publica,
+.resultado-publico {
+    padding: 24px;
+}
+
+.formulario-publico {
+    display: grid;
+    gap: 16px;
+    margin-top: 22px;
+}
+
+.formulario-publico label {
+    display: block;
+    margin-bottom: 7px;
+    font-weight: 900;
+}
+
+.campo-publico {
+    width: 100%;
+    min-height: 46px;
+    padding: 0 12px;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: rgba(255, 255, 255, .9);
+}
+
+.resultado-publico dl {
+    display: grid;
+    gap: 10px;
+    margin: 18px 0 0;
+}
+
+.resultado-publico dl div {
+    display: grid;
+    grid-template-columns: 130px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid rgba(15, 23, 42, .08);
+    border-radius: var(--radio);
+    background: rgba(255, 255, 255, .62);
+}
+
+.resultado-publico dt {
+    color: var(--texto-suave);
+    font-weight: 900;
+}
+
+.resultado-publico dd {
+    margin: 0;
+}
+
+@media (max-width: 900px) {
+    .cabecera-publica,
+    .portada-publica,
+    .consulta-publica {
+        grid-template-columns: 1fr;
+    }
+
+    .cabecera-publica {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .bloques-publicos,
+    .lista-servicios-publicos {
+        grid-template-columns: 1fr;
+    }
+
+    .portada-publica h1,
+    .pagina-publica h1,
+    .consulta-publica h1 {
+        font-size: 2.5rem;
+    }
+}

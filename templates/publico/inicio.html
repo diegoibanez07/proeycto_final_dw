@@ -1,0 +1,44 @@
+{% extends 'publico/base_publico.html' %}
+
+{% block title %}GarantiaPro | Garantias y reparaciones{% endblock %}
+
+{% block content %}
+<section class="portada-publica">
+    <div>
+        <span class="etiqueta-publica">Servicio tecnico organizado</span>
+        <h1>Control profesional para garantias, reparaciones y entregas.</h1>
+        <p>
+            Registramos cada producto, diagnostico, evidencia y estado para que
+            el cliente y la empresa sepan que ocurre durante todo el proceso.
+        </p>
+        <div class="acciones-publicas">
+            <a class="boton-publico primario-publico" href="{% url 'consulta_estado_publico' %}">Consultar estado</a>
+            <a class="boton-publico secundario-publico" href="{% url 'servicios_publicos' %}">Ver servicios</a>
+        </div>
+    </div>
+    <aside class="tarjeta-portada-publica">
+        <span>Flujo de atencion</span>
+        <ol>
+            <li>Recepcion del producto</li>
+            <li>Diagnostico tecnico</li>
+            <li>Evidencias y reparacion</li>
+            <li>Entrega documentada</li>
+        </ol>
+    </aside>
+</section>
+
+<section class="bloques-publicos">
+    <article>
+        <strong>Garantias trazables</strong>
+        <p>Cada caso queda conectado con cliente, producto, factura y garantia.</p>
+    </article>
+    <article>
+        <strong>Evidencias claras</strong>
+        <p>Fotos y documentos respaldan el ingreso, diagnostico, reparacion y entrega.</p>
+    </article>
+    <article>
+        <strong>Estados visibles</strong>
+        <p>El avance del caso se puede consultar con documento y codigo.</p>
+    </article>
+</section>
+{% endblock %}

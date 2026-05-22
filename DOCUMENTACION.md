@@ -22,17 +22,25 @@ cierre de la garantia o reparacion.
 
 ## 2. Usuarios y roles
 
-El sistema no es publico. Para entrar, cada persona debe iniciar sesion.
+El sistema tiene una parte publica y una parte privada.
 
-La entrada esta en:
+La parte publica no exige inicio de sesion:
+
+```text
+/
+/servicios/
+/consulta-estado/
+```
+
+La parte privada si exige inicio de sesion. La entrada del personal esta en:
 
 ```text
 /cuenta/login/
 ```
 
-Despues de iniciar sesion, el menu cambia segun el rol del usuario. Si alguien
-intenta abrir una pagina que no le corresponde escribiendo la URL manualmente,
-el sistema muestra una pagina `403 Acceso no autorizado`.
+Despues de iniciar sesion, el menu privado cambia segun el rol del usuario. Si
+alguien intenta abrir una pagina privada que no le corresponde escribiendo la
+URL manualmente, el sistema muestra una pagina `403 Acceso no autorizado`.
 
 ### Administrador
 
@@ -109,6 +117,27 @@ No puede crear, editar, eliminar ni avanzar estados.
 | Entregas | Si | Si | No | Si |
 
 ## 4. Modulos principales
+
+### Modulo publico
+
+El modulo publico no exige inicio de sesion.
+
+Rutas:
+
+```text
+/                  Pagina de inicio publica
+/servicios/         Servicios ofrecidos
+/consulta-estado/   Consulta publica de estado
+```
+
+Permite que una persona externa vea que ofrece la empresa y consulte el estado
+basico de su producto con:
+
+- Documento del cliente.
+- Numero de caso o numero de factura.
+
+No permite crear, editar o eliminar informacion. Tampoco muestra diagnosticos
+internos completos, evidencias privadas ni datos administrativos.
 
 ### Clientes
 
@@ -735,6 +764,12 @@ Abrir:
 
 ```text
 http://127.0.0.1:8000/
+```
+
+La ruta anterior abre el modulo publico. El panel privado del personal queda en:
+
+```text
+http://127.0.0.1:8000/panel/
 ```
 
 ## 14. Cargar datos realistas
