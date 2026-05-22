@@ -1,10 +1,11 @@
 {% extends 'publico/base_publico.html' %}
+{% load static %}
 
 {% block title %}Consultar estado | GarantiaPro{% endblock %}
 
 {% block content %}
 <section class="consulta-publica">
-    <div class="panel-consulta-publica">
+    <div class="panel-consulta-publica" data-aos="fade-right">
         <span class="etiqueta-publica">Consulta publica</span>
         <h1>Consulta el estado de tu producto.</h1>
         <p>
@@ -26,10 +27,16 @@
         </form>
     </div>
 
-    <div class="resultado-publico">
+    <div class="resultado-publico" data-aos="fade-left">
+        <figure class="imagen-consulta-publica">
+            <img src="{% static 'img/consulta-garantias.png' %}" alt="Consulta moderna del estado de una garantia">
+        </figure>
         {% if caso %}
             <span class="etiqueta-publica">Resultado encontrado</span>
             <h2>Caso #{{ caso.id }}</h2>
+            <div class="barra-estado-publica" aria-label="Estado del caso">
+                <span style="width: 72%"></span>
+            </div>
             <dl>
                 <div>
                     <dt>Cliente</dt>

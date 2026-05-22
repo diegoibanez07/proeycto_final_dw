@@ -50,11 +50,15 @@ class PruebasModuloPublico(TestCase):
         respuesta = self.client.get(reverse('inicio_publico'))
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, 'Garantias y reparaciones')
+        self.assertContains(respuesta, 'favicon.svg')
+        self.assertContains(respuesta, 'hero-garantias.png')
+        self.assertContains(respuesta, 'numero-publico')
 
     def test_servicios_publicos_no_exige_login(self):
         respuesta = self.client.get(reverse('servicios_publicos'))
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, 'Servicios orientados')
+        self.assertContains(respuesta, 'servicios-garantias.png')
 
     def test_consulta_publica_encuentra_caso_por_factura(self):
         respuesta = self.client.get(reverse('consulta_estado_publico'), {
@@ -62,6 +66,7 @@ class PruebasModuloPublico(TestCase):
             'codigo': 'FAC-PUBLICA-001',
         })
         self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, 'consulta-garantias.png')
         self.assertContains(respuesta, f'Caso #{self.caso.id}')
         self.assertContains(respuesta, 'Recibido')
 

@@ -1,44 +1,101 @@
 {% extends 'publico/base_publico.html' %}
+{% load static %}
 
 {% block title %}GarantiaPro | Garantias y reparaciones{% endblock %}
 
 {% block content %}
 <section class="portada-publica">
-    <div>
-        <span class="etiqueta-publica">Servicio tecnico organizado</span>
-        <h1>Control profesional para garantias, reparaciones y entregas.</h1>
+    <div class="contenido-portada-publica" data-aos="fade-up">
+        <span class="etiqueta-publica">Centro tecnico conectado</span>
+        <h1>Garantias y reparaciones con una experiencia clara desde el primer minuto.</h1>
         <p>
-            Registramos cada producto, diagnostico, evidencia y estado para que
-            el cliente y la empresa sepan que ocurre durante todo el proceso.
+            El cliente consulta su avance sin iniciar sesion y el equipo interno
+            gestiona ventas, garantias, diagnosticos, evidencias, reparaciones
+            y entregas con trazabilidad completa.
         </p>
         <div class="acciones-publicas">
-            <a class="boton-publico primario-publico" href="{% url 'consulta_estado_publico' %}">Consultar estado</a>
+            <a class="boton-publico primario-publico" href="{% url 'consulta_estado_publico' %}">Consultar mi producto</a>
             <a class="boton-publico secundario-publico" href="{% url 'servicios_publicos' %}">Ver servicios</a>
         </div>
+        <div class="metricas-publicas" aria-label="Indicadores de confianza">
+            <div>
+                <strong class="numero-publico" data-valor="24">0</strong>
+                <span>horas de seguimiento</span>
+            </div>
+            <div>
+                <strong class="numero-publico" data-valor="7">0</strong>
+                <span>estados del proceso</span>
+            </div>
+            <div>
+                <strong class="numero-publico" data-valor="100">0</strong>
+                <span>por ciento trazable</span>
+            </div>
+        </div>
     </div>
-    <aside class="tarjeta-portada-publica">
-        <span>Flujo de atencion</span>
-        <ol>
-            <li>Recepcion del producto</li>
-            <li>Diagnostico tecnico</li>
-            <li>Evidencias y reparacion</li>
-            <li>Entrega documentada</li>
-        </ol>
-    </aside>
+
+    <figure class="imagen-portada-publica" data-aos="zoom-in" data-aos-delay="120">
+        <img src="{% static 'img/hero-garantias.png' %}" alt="Recepcion moderna de un producto para garantia">
+        <figcaption class="tarjeta-flotante-publica">
+            <span>Estado activo</span>
+            <strong>Diagnostico en curso</strong>
+            <small>Evidencias y tecnico asignado</small>
+        </figcaption>
+    </figure>
 </section>
 
 <section class="bloques-publicos">
-    <article>
+    <article class="tarjeta-servicio-publica" data-aos="fade-up">
+        <span class="icono-publico">01</span>
         <strong>Garantias trazables</strong>
-        <p>Cada caso queda conectado con cliente, producto, factura y garantia.</p>
+        <p>Cada caso queda conectado con cliente, producto, factura y garantia real.</p>
     </article>
-    <article>
-        <strong>Evidencias claras</strong>
+    <article class="tarjeta-servicio-publica" data-aos="fade-up" data-aos-delay="80">
+        <span class="icono-publico">02</span>
+        <strong>Evidencias visibles</strong>
         <p>Fotos y documentos respaldan el ingreso, diagnostico, reparacion y entrega.</p>
     </article>
-    <article>
-        <strong>Estados visibles</strong>
-        <p>El avance del caso se puede consultar con documento y codigo.</p>
+    <article class="tarjeta-servicio-publica" data-aos="fade-up" data-aos-delay="160">
+        <span class="icono-publico">03</span>
+        <strong>Consulta publica</strong>
+        <p>El cliente mira el estado usando documento y codigo, sin exponer informacion privada.</p>
     </article>
+</section>
+
+<section class="proceso-publico">
+    <div class="encabezado-seccion-publica" data-aos="fade-right">
+        <span class="etiqueta-publica">Flujo completo</span>
+        <h2>Del mostrador a la entrega, cada paso queda registrado.</h2>
+    </div>
+    <div class="pasos-publicos">
+        <article class="paso-publico" data-aos="fade-up">
+            <span>1</span>
+            <h3>Recepcion</h3>
+            <p>Se identifica el cliente, producto, factura, garantia y falla reportada.</p>
+        </article>
+        <article class="paso-publico" data-aos="fade-up" data-aos-delay="80">
+            <span>2</span>
+            <h3>Diagnostico</h3>
+            <p>El tecnico documenta hallazgos, solucion, repuestos y costo estimado.</p>
+        </article>
+        <article class="paso-publico" data-aos="fade-up" data-aos-delay="160">
+            <span>3</span>
+            <h3>Reparacion</h3>
+            <p>El avance cambia de estado y se anexan evidencias fotograficas.</p>
+        </article>
+        <article class="paso-publico" data-aos="fade-up" data-aos-delay="240">
+            <span>4</span>
+            <h3>Entrega</h3>
+            <p>Se registra quien recibe, documento, fecha, observaciones y cierre.</p>
+        </article>
+    </div>
+</section>
+
+<section class="llamado-publico" data-aos="fade-up">
+    <div>
+        <span class="etiqueta-publica">Consulta inmediata</span>
+        <h2>Tu producto no queda en el aire.</h2>
+        <p>Con el documento y el numero de factura o caso puedes revisar el avance sin pedir acceso al panel interno.</p>
+    </div>
+    <a class="boton-publico primario-publico" href="{% url 'consulta_estado_publico' %}">Revisar estado</a>
 </section>
 {% endblock %}

@@ -5,7 +5,11 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}GarantiaPro{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=publico-20260522">
+    <meta name="description" content="Plataforma publica para consultar garantias, reparaciones y estado de productos.">
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=publico-visual-20260522">
 </head>
 <body class="sitio-publico">
     <header class="cabecera-publica">
@@ -23,5 +27,7 @@
     <main>
         {% block content %}{% endblock %}
     </main>
+    <script defer src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+    <script defer src="{% static 'js/app.js' %}?v=publico-visual-20260522"></script>
 </body>
 </html>
