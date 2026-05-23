@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from garantias.models import CasoReparacion, CategoriaProducto, Cliente, EstadoCaso, Garantia, Producto, Venta
+from publico.forms import FormularioConsultaEstado
 
 
 class PruebasModuloPublico(TestCase):
@@ -45,6 +46,12 @@ class PruebasModuloPublico(TestCase):
             fecha_ingreso=timezone.now(),
             tecnico_responsable='Tecnico Garantias',
         )
+
+    def test_formulario_consulta_publica_tiene_autocompletado(self):
+        formulario = FormularioConsultaEstado()
+        self.assertEqual(formulario.fields['documento'].widget.attrs['autocomplete'], 'on')
+        self.assertEqual(formulario.fields['documento'].widget.attrs['inputmode'], 'numeric')
+        self.assertEqual(formulario.fields['codigo'].widget.attrs['autocomplete'], 'on')
 
     def test_inicio_publico_no_exige_login(self):
         respuesta = self.client.get(reverse('inicio_publico'))

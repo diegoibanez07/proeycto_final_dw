@@ -8,6 +8,8 @@ class FormularioConsultaEstado(forms.Form):
         widget=forms.TextInput(attrs={
             'class': 'campo-publico',
             'placeholder': 'Ejemplo: 1000000001',
+            'autocomplete': 'on',
+            'inputmode': 'numeric',
         }),
     )
     codigo = forms.CharField(
@@ -16,5 +18,6 @@ class FormularioConsultaEstado(forms.Form):
         widget=forms.TextInput(attrs={
             'class': 'campo-publico',
             'placeholder': 'Ejemplo: 125 o FAC-202605-000125',
+            'autocomplete': 'on',
         }),
     )

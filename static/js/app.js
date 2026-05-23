@@ -104,6 +104,31 @@ const activarMovimientoPublico = () => {
     });
 };
 
+const activarSelectoresAutocompletables = () => {
+    if (!window.TomSelect) return;
+
+    const selectores = document.querySelectorAll('select.selector-autocomplete');
+    selectores.forEach((selector) => {
+        if (selector.tomselect) return;
+
+        const placeholder = selector.dataset.placeholder || 'Buscar opcion...';
+        new window.TomSelect(selector, {
+            allowEmptyOption: true,
+            create: false,
+            maxOptions: 200,
+            placeholder,
+            searchField: ['text'],
+            sortField: {
+                field: 'text',
+                direction: 'asc',
+            },
+            render: {
+                no_results: () => '<div class="no-results">Sin resultados</div>',
+            },
+        });
+    });
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     activarMensajes();
     activarSuperficiesPrivadas();
@@ -111,4 +136,5 @@ document.addEventListener('DOMContentLoaded', () => {
     activarAnimacionesPublicas();
     activarContadoresPublicos();
     activarMovimientoPublico();
+    activarSelectoresAutocompletables();
 });

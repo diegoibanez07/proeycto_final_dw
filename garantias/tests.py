@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .forms import (
+    FormularioCasoReparacion,
     FormularioCliente,
     FormularioDiagnostico,
     FormularioEntrega,
@@ -201,6 +202,20 @@ class PruebasModelosGarantias(BasePruebasGarantias):
 class PruebasFormulariosGarantias(BasePruebasGarantias):
     def setUp(self):
         self.datos = self.crear_datos_base()
+
+    def test_formularios_agregan_autocompletado_en_campos_clave(self):
+        formulario_cliente = FormularioCliente()
+        self.assertEqual(formulario_cliente.fields['correo'].widget.attrs['autocomplete'], 'email')
+        self.assertEqual(formulario_cliente.fields['telefono'].widget.attrs['autocomplete'], 'tel')
+
+        formulario_caso = FormularioCasoReparacion()
+        widget_garantia = formulario_caso.fields['garantia'].widget
+        widget_estado = formulario_caso.fields['estado_actual'].widget
+
+        self.assertIn('selector-autocomplete', widget_garantia.attrs['class'])
+        self.assertEqual(widget_garantia.attrs['data-autocomplete'], 'true')
+        self.assertIn('Buscar garantia', widget_garantia.attrs['data-placeholder'])
+        self.assertIn('selector-autocomplete', widget_estado.attrs['class'])
 
     def test_formulario_cliente_rechaza_telefono_invalido(self):
         formulario = FormularioCliente(data={

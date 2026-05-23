@@ -538,6 +538,62 @@ h2 {
     box-shadow: 0 0 0 4px rgba(8, 127, 91, .12);
 }
 
+.ts-wrapper.selector-autocomplete {
+    width: 100%;
+}
+
+.ts-wrapper.selector-autocomplete .ts-control {
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid var(--linea);
+    border-radius: var(--radio);
+    background: rgba(255, 255, 255, .88);
+    color: var(--texto-principal);
+    box-shadow: none;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+
+.ts-wrapper.selector-autocomplete.focus .ts-control {
+    border-color: var(--verde);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(8, 127, 91, .12);
+}
+
+.ts-wrapper.selector-autocomplete .ts-control input {
+    color: var(--texto-principal);
+    font-size: .96rem;
+}
+
+.ts-wrapper.selector-autocomplete .item {
+    color: var(--texto-principal);
+    font-weight: 700;
+}
+
+.ts-wrapper.selector-autocomplete.single .ts-control::after {
+    border-color: var(--texto-suave) transparent transparent transparent;
+}
+
+.ts-dropdown {
+    overflow: hidden;
+    border: 1px solid rgba(15, 23, 42, .12);
+    border-radius: var(--radio);
+    box-shadow: 0 18px 42px rgba(15, 23, 42, .16);
+}
+
+.ts-dropdown .option {
+    padding: 10px 12px;
+}
+
+.ts-dropdown .active {
+    background: rgba(8, 127, 91, .10);
+    color: var(--verde-oscuro);
+}
+
+.no-results {
+    padding: 10px 12px;
+    color: var(--texto-suave);
+}
+
 .malla-registros {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
