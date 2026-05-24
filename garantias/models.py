@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
@@ -28,6 +29,13 @@ class Cliente(ModeloFechasRegistro):
     ]
 
     tipo_documento = models.CharField(max_length=3, choices=TIPO_DOCUMENTO, default='CC')
+    usuario = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cliente',
+    )
     documento = models.CharField(max_length=30, unique=True)
     nombre = models.CharField(max_length=120)
     telefono = models.CharField(max_length=20, validators=[validador_telefono])
@@ -175,6 +183,20 @@ class CasoReparacion(ModeloFechasRegistro):
     ]
 
     garantia = models.ForeignKey(Garantia, on_delete=models.PROTECT, related_name='casos')
+    solicitado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='casos_solicitados',
+    )
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='casos_creados',
+    )
     descripcion_falla = models.TextField()
     estado_actual = models.ForeignKey(EstadoCaso, on_delete=models.PROTECT, related_name='casos_actuales')
     prioridad = models.CharField(max_length=10, choices=PRIORIDADES, default='media')

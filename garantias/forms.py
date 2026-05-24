@@ -105,7 +105,7 @@ class FormularioModeloEstilizado(forms.ModelForm):
 class FormularioCliente(FormularioModeloEstilizado):
     class Meta:
         model = Cliente
-        fields = ['tipo_documento', 'documento', 'nombre', 'telefono', 'correo', 'direccion', 'ciudad', 'activo']
+        fields = ['tipo_documento', 'usuario', 'documento', 'nombre', 'telefono', 'correo', 'direccion', 'ciudad', 'activo']
 
 
 class FormularioCategoriaProducto(FormularioModeloEstilizado):

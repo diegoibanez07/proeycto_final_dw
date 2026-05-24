@@ -1,0 +1,61 @@
+{% extends 'publico/base_publico.html' %}
+{% load static %}
+
+{% block title %}Solicitar garantia | GarantiaPro{% endblock %}
+
+{% block content %}
+<section class="consulta-publica">
+    <div class="panel-consulta-publica" data-aos="fade-right">
+        <span class="etiqueta-publica">Solicitud del cliente</span>
+        <h1>Reporta una garantia o reparacion.</h1>
+        <p>
+            Usa el documento registrado en la compra y el numero de factura.
+            La solicitud queda como caso tecnico para que la empresa lo gestione.
+        </p>
+        <form method="post" class="formulario-publico">
+            {% csrf_token %}
+            {% if formulario.non_field_errors %}
+                <div class="errores-formulario">{{ formulario.non_field_errors }}</div>
+            {% endif %}
+            <div>
+                <label for="{{ formulario.documento.id_for_label }}">{{ formulario.documento.label }}</label>
+                {{ formulario.documento }}
+                {% for error in formulario.documento.errors %}<span class="texto-error">{{ error }}</span>{% endfor %}
+            </div>
+            <div>
+                <label for="{{ formulario.numero_factura.id_for_label }}">{{ formulario.numero_factura.label }}</label>
+                {{ formulario.numero_factura }}
+                {% for error in formulario.numero_factura.errors %}<span class="texto-error">{{ error }}</span>{% endfor %}
+            </div>
+            <div class="campo-ancho-publico">
+                <label for="{{ formulario.descripcion_falla.id_for_label }}">{{ formulario.descripcion_falla.label }}</label>
+                {{ formulario.descripcion_falla }}
+                {% for error in formulario.descripcion_falla.errors %}<span class="texto-error">{{ error }}</span>{% endfor %}
+            </div>
+            <button class="boton-publico primario-publico" type="submit">Crear solicitud</button>
+        </form>
+    </div>
+
+    <div class="resultado-publico" data-aos="fade-left">
+        <figure class="imagen-consulta-publica">
+            <img src="{% static 'img/servicios-garantias.png' %}" alt="Solicitud publica de garantia y reparacion">
+        </figure>
+        <span class="etiqueta-publica">Que pasa despues</span>
+        <h2>La solicitud entra al flujo tecnico.</h2>
+        <dl>
+            <div>
+                <dt>1. Registro</dt>
+                <dd>Se crea un caso tecnico asociado a tu usuario cliente, factura y producto.</dd>
+            </div>
+            <div>
+                <dt>2. Revision</dt>
+                <dd>Recepcion o tecnico valida garantia, diagnostico y evidencias.</dd>
+            </div>
+            <div>
+                <dt>3. Consulta</dt>
+                <dd>Podras ver el estado con tu documento y el numero de caso generado.</dd>
+            </div>
+        </dl>
+    </div>
+</section>
+{% endblock %}

@@ -28,6 +28,13 @@
     {% for registro in registros %}
         <article class="tarjeta-registro aparecer">
             <a class="contenido-registro" href="{{ registro.get_absolute_url }}">
+                {% if seccion == 'evidencias' and registro.imagen %}
+                    {% if registro.imagen.url|lower|slice:'-4:' == '.pdf' %}
+                        <span class="miniatura-evidencia miniatura-pdf">PDF</span>
+                    {% else %}
+                        <img class="miniatura-evidencia" src="{{ registro.imagen.url }}" alt="{{ registro.descripcion }}">
+                    {% endif %}
+                {% endif %}
                 <span class="texto-superior">{{ registro.creado|date:'d M Y'|default:'Registro' }}</span>
                 <strong>{{ registro }}</strong>
                 {% if registro.actualizado %}

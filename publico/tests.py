@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
@@ -11,8 +12,10 @@ from publico.forms import FormularioConsultaEstado
 class PruebasModuloPublico(TestCase):
     def setUp(self):
         categoria, _ = CategoriaProducto.objects.get_or_create(nombre='Computadores')
+        usuario_cliente = User.objects.create_user(username='cliente_publico', password='cliente.01')
         cliente = Cliente.objects.create(
             tipo_documento='CC',
+            usuario=usuario_cliente,
             documento='100200300',
             nombre='Cliente Publico',
             telefono='3001234567',
@@ -66,6 +69,18 @@ class PruebasModuloPublico(TestCase):
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, 'Servicios orientados')
         self.assertContains(respuesta, 'servicios-garantias.png')
+
+    def test_solicitud_publica_crea_caso_asociado_al_usuario_cliente(self):
+        respuesta = self.client.post(reverse('solicitar_servicio_publico'), {
+            'documento': '100200300',
+            'numero_factura': 'FAC-PUBLICA-001',
+            'descripcion_falla': 'El equipo presenta fallas al encender.',
+        })
+        self.assertEqual(respuesta.status_code, 302)
+        caso = CasoReparacion.objects.order_by('-id').first()
+        self.assertEqual(caso.solicitado_por.username, 'cliente_publico')
+        self.assertEqual(caso.creado_por.username, 'cliente_publico')
+        self.assertTrue(caso.historial_estados.filter(comentario='Solicitud publica registrada por el cliente.').exists())
 
     def test_consulta_publica_encuentra_caso_por_factura(self):
         respuesta = self.client.get(reverse('consulta_estado_publico'), {

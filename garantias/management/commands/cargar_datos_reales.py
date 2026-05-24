@@ -1,13 +1,15 @@
-import base64
 from datetime import timedelta
 from decimal import Decimal
 from pathlib import Path
 from random import Random
 
-from django.core.management.base import BaseCommand
 from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
+from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
+from PIL import Image, ImageDraw, ImageFont
 
 from garantias.models import (
     CasoReparacion,
@@ -56,6 +58,7 @@ class Command(BaseCommand):
             Venta.objects.all().delete()
             Producto.objects.all().delete()
             Cliente.objects.all().delete()
+            get_user_model().objects.filter(username__startswith='cliente_').delete()
 
         categorias = self.obtener_categorias()
         estados = self.obtener_estados()
@@ -139,19 +142,44 @@ class Command(BaseCommand):
         return estados
 
     def crear_clientes(self, cantidad, generador):
+        Usuario = get_user_model()
         nombres = ['Andres', 'Camila', 'Santiago', 'Valentina', 'Juan', 'Laura', 'Mateo', 'Daniela', 'Sebastian', 'Natalia', 'Carlos', 'Paula', 'Felipe', 'Manuela', 'Diego', 'Carolina', 'Alejandro', 'Mariana', 'Julian', 'Sofia']
         apellidos = ['Gomez', 'Rodriguez', 'Martinez', 'Garcia', 'Lopez', 'Hernandez', 'Perez', 'Sanchez', 'Ramirez', 'Torres', 'Diaz', 'Vargas', 'Castro', 'Rojas', 'Moreno', 'Jimenez', 'Ortiz', 'Gutierrez', 'Ruiz', 'Mendoza']
         ciudades = ['Bogota', 'Medellin', 'Cali', 'Barranquilla', 'Bucaramanga', 'Pereira', 'Manizales', 'Cartagena', 'Ibague', 'Villavicencio']
-        clientes = []
+        datos_clientes = []
+        usuarios = []
+        clave_clientes = make_password('cliente.01')
         for numero in range(1, cantidad + 1):
             nombre = f'{generador.choice(nombres)} {generador.choice(apellidos)} {generador.choice(apellidos)}'
+            correo = f'{nombre.lower().replace(" ", ".")}.{numero}@correo.com'
+            nombre_usuario = f'cliente_{numero:06d}'
+            partes_nombre = nombre.split()
+            usuarios.append(Usuario(
+                username=nombre_usuario,
+                first_name=partes_nombre[0],
+                last_name=' '.join(partes_nombre[1:]),
+                email=correo,
+                password=clave_clientes,
+                is_active=True,
+            ))
+            datos_clientes.append((numero, nombre, correo, nombre_usuario))
+
+        Usuario.objects.bulk_create(usuarios, ignore_conflicts=True, batch_size=500)
+        usuarios_por_nombre = {
+            usuario.username: usuario
+            for usuario in Usuario.objects.filter(username__in=[dato[3] for dato in datos_clientes])
+        }
+
+        clientes = []
+        for numero, nombre, correo, nombre_usuario in datos_clientes:
             ciudad = generador.choice(ciudades)
             clientes.append(Cliente(
                 tipo_documento='CC',
+                usuario=usuarios_por_nombre.get(nombre_usuario),
                 documento=f'{1000000000 + numero}',
                 nombre=nombre,
                 telefono=f'3{generador.randint(0, 9)}{generador.randint(10000000, 99999999)}',
-                correo=f'{nombre.lower().replace(" ", ".")}.{numero}@correo.com',
+                correo=correo,
                 direccion=f'Calle {generador.randint(1, 170)} #{generador.randint(1, 90)}-{generador.randint(1, 99)}',
                 ciudad=ciudad,
                 activo=True,
@@ -244,6 +272,8 @@ class Command(BaseCommand):
             fecha_cierre = fecha_ingreso + timedelta(days=generador.randint(2, 20)) if estado.es_final else None
             casos.append(CasoReparacion(
                 garantia=garantia,
+                solicitado_por=garantia.venta.cliente.usuario,
+                creado_por=garantia.venta.cliente.usuario,
                 descripcion_falla=generador.choice(fallas),
                 estado_actual=estado,
                 prioridad=generador.choice(['baja', 'media', 'alta', 'critica']),
@@ -287,7 +317,7 @@ class Command(BaseCommand):
             caso = casos[indice % len(casos)]
             tipo = tipos[indice % len(tipos)]
             ruta_relativa = carpeta / f'evidencia_caso_{caso.id:05d}_{tipo}.png'
-            self.crear_archivo_evidencia(ruta_relativa)
+            self.crear_archivo_evidencia(ruta_relativa, caso, tipo)
             evidencias.append(Evidencia(
                 caso=caso,
                 tipo=tipo,
@@ -297,13 +327,88 @@ class Command(BaseCommand):
             ))
         return Evidencia.objects.bulk_create(evidencias, batch_size=500)
 
-    def crear_archivo_evidencia(self, ruta_relativa):
+    def crear_archivo_evidencia(self, ruta_relativa, caso, tipo):
         ruta_absoluta = Path(settings.MEDIA_ROOT) / ruta_relativa
-        if ruta_absoluta.exists():
-            return
         ruta_absoluta.parent.mkdir(parents=True, exist_ok=True)
-        imagen_base64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII='
-        ruta_absoluta.write_bytes(base64.b64decode(imagen_base64))
+
+        colores = {
+            'ingreso': ('#2563eb', '#dbeafe'),
+            'diagnostico': ('#7c3aed', '#ede9fe'),
+            'reparacion': ('#0f766e', '#ccfbf1'),
+            'entrega': ('#16a34a', '#dcfce7'),
+        }
+        color_principal, color_suave = colores.get(tipo, ('#111827', '#f8fafc'))
+
+        imagen = Image.new('RGB', (1200, 800), '#f8fafc')
+        dibujo = ImageDraw.Draw(imagen)
+        fuente_titulo = self.obtener_fuente(54)
+        fuente_subtitulo = self.obtener_fuente(34)
+        fuente_texto = self.obtener_fuente(26)
+        fuente_pequena = self.obtener_fuente(20)
+
+        dibujo.rounded_rectangle((36, 36, 1164, 764), radius=34, fill='#ffffff', outline='#cbd5e1', width=3)
+        dibujo.rounded_rectangle((36, 36, 1164, 178), radius=34, fill=color_principal)
+        dibujo.rectangle((36, 118, 1164, 178), fill=color_principal)
+        dibujo.text((76, 70), f'EVIDENCIA DE {tipo.upper()}', fill='#ffffff', font=fuente_titulo)
+        dibujo.text((76, 138), f'Caso #{caso.id:05d}', fill='#e0f2fe', font=fuente_pequena)
+
+        dibujo.rounded_rectangle((76, 218, 1124, 350), radius=24, fill=color_suave, outline='#bae6fd', width=2)
+        dibujo.text((110, 246), 'Producto registrado', fill='#0f172a', font=fuente_subtitulo)
+        dibujo.text((110, 294), f'{caso.producto.nombre} {caso.producto.marca} {caso.producto.modelo}', fill='#334155', font=fuente_texto)
+
+        datos = [
+            ('Cliente', caso.cliente.nombre),
+            ('Documento', caso.cliente.documento),
+            ('Serial', caso.producto.serial),
+            ('Estado', caso.estado_actual.nombre),
+            ('Tecnico', caso.tecnico_responsable or 'Pendiente'),
+            ('Fecha ingreso', timezone.localtime(caso.fecha_ingreso).strftime('%d/%m/%Y %H:%M')),
+        ]
+
+        x_iniciales = [94, 622]
+        y = 398
+        for indice, (etiqueta, valor) in enumerate(datos):
+            columna = indice % 2
+            if indice and columna == 0:
+                y += 105
+            x = x_iniciales[columna]
+            dibujo.text((x, y), etiqueta.upper(), fill=color_principal, font=fuente_pequena)
+            for numero_linea, linea in enumerate(self.dividir_texto(str(valor), 34)):
+                y_texto = y + 28 + (numero_linea * 30)
+                dibujo.text((x, y_texto), linea, fill='#111827', font=fuente_texto)
+
+        y_base = 650
+        dibujo.rounded_rectangle((76, y_base, 1124, 724), radius=18, fill='#0f172a')
+        dibujo.text((110, y_base + 20), 'Archivo generado para pruebas visuales del modulo Fotos y evidencias', fill='#ffffff', font=fuente_texto)
+        for indice in range(24):
+            alto = 18 + ((indice * 7) % 34)
+            x = 860 + indice * 10
+            dibujo.rectangle((x, y_base + 48 - alto, x + 5, y_base + 48), fill=color_suave)
+
+        imagen.save(ruta_absoluta, format='PNG', optimize=True)
+
+    def obtener_fuente(self, tamano):
+        for nombre in ['DejaVuSans.ttf', 'arial.ttf']:
+            try:
+                return ImageFont.truetype(nombre, tamano)
+            except OSError:
+                continue
+        return ImageFont.load_default()
+
+    def dividir_texto(self, texto, limite):
+        palabras = texto.split()
+        lineas = []
+        linea = ''
+        for palabra in palabras:
+            propuesta = f'{linea} {palabra}'.strip()
+            if len(propuesta) > limite and linea:
+                lineas.append(linea)
+                linea = palabra
+            else:
+                linea = propuesta
+        if linea:
+            lineas.append(linea)
+        return lineas[:2]
 
     def crear_historial(self, cantidad, generador, casos, estados):
         historiales = []

@@ -1,11 +1,14 @@
 from datetime import date, timedelta
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from PIL import Image
 
 from .forms import (
     FormularioCasoReparacion,
@@ -487,3 +490,12 @@ class PruebasComandoCargaDatos(TestCase):
         self.assertEqual(HistorialEstado.objects.count(), 12)
         self.assertEqual(Entrega.objects.count(), 12)
         self.assertTrue(CasoReparacion.objects.select_related('garantia__venta__cliente').exists())
+        self.assertEqual(User.objects.filter(username__startswith='cliente_').count(), 12)
+        self.assertTrue(Cliente.objects.filter(usuario__username__startswith='cliente_').exists())
+        self.assertTrue(CasoReparacion.objects.filter(solicitado_por__username__startswith='cliente_').exists())
+        evidencia = Evidencia.objects.first()
+        ruta_archivo = Path(settings.MEDIA_ROOT) / evidencia.imagen.name
+        self.assertTrue(ruta_archivo.exists())
+        self.assertGreater(ruta_archivo.stat().st_size, 1000)
+        with Image.open(ruta_archivo) as imagen:
+            self.assertEqual(imagen.size, (1200, 800))

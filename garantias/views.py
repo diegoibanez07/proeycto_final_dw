@@ -519,6 +519,8 @@ class VistaDetalleCaso(VistaBaseDetalle):
         ('Cliente', 'cliente'),
         ('Producto', 'producto'),
         ('Garantia', 'garantia'),
+        ('Solicitado por', 'solicitado_por'),
+        ('Creado por', 'creado_por'),
         ('Prioridad', 'get_prioridad_display'),
         ('Estado actual', 'estado_actual'),
         ('Ingreso', 'fecha_ingreso'),
@@ -551,6 +553,9 @@ class VistaCreacionCaso(VistaBaseFormulario, CreateView):
     roles_permitidos = ROLES_CASOS
 
     def form_valid(self, formulario):
+        caso = formulario.instance
+        caso.creado_por = self.request.user
+        caso.solicitado_por = caso.garantia.venta.cliente.usuario
         respuesta = super().form_valid(formulario)
         HistorialEstado.objects.create(
             caso=self.object,

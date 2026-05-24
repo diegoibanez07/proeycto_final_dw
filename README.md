@@ -61,10 +61,19 @@ Rutas principales:
 ```text
 /                  Modulo publico
 /servicios/         Servicios ofrecidos
+/solicitar-servicio/ Solicitud publica de garantia o reparacion
 /consulta-estado/   Consulta publica de estado
 /panel/             Panel privado con login
 /cuenta/login/      Ingreso del personal
 ```
+
+## Flujo para cliente final
+
+El cliente no necesita entrar al panel privado. Desde `/solicitar-servicio/`
+ingresa su documento, numero de factura y descripcion de la falla. Si la venta
+existe, el sistema crea un caso tecnico asociado al usuario cliente generado en
+la base de datos. Luego el cliente consulta el avance en `/consulta-estado/`
+con su documento y el numero de caso o factura.
 
 ## Cargar datos realistas
 
